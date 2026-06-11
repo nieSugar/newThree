@@ -1,0 +1,1158 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    "Microsoft YaHei",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  color: #f4f7fb;
+  background: #111111;
+  --bg: #111111;
+  --panel: #1b1b1d;
+  --panel-2: #242326;
+  --panel-3: #2d2b30;
+  --line: #3b383f;
+  --muted: #a8b0bd;
+  --text: #f4f7fb;
+  --cyan: #3dd6d0;
+  --green: #8bd46f;
+  --amber: #f4c35b;
+  --coral: #ff816b;
+  --violet: #b79cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--bg);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(480px, 1fr) minmax(340px, 390px);
+  height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(61, 214, 208, 0.06), transparent 32%),
+    var(--bg);
+}
+
+.sidebar,
+.inspector {
+  min-height: 0;
+  overflow: auto;
+  border-color: var(--line);
+  background: #181719;
+}
+
+.sidebar {
+  padding: 20px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.inspector {
+  padding: 16px;
+  border-left: 1px solid var(--line);
+}
+
+.workspace {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+}
+
+.brand-block {
+  padding: 8px 0 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--cyan);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: 1.75rem;
+}
+
+h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.4rem, 2vw, 2.2rem);
+  line-height: 1.16;
+}
+
+h3 {
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.brand-copy,
+[data-role="lesson-summary"],
+.study-panel p,
+.control-copy small,
+.term-item small,
+.exercise-item small {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.progress-block,
+.panel-section,
+.study-panel,
+.canvas-section,
+.lesson-title-band {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.progress-block {
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.progress-top,
+.section-heading,
+.lesson-actions,
+.metric-cell,
+.exercise-item,
+.term-item strong {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-track {
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #343238;
+}
+
+.progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width 180ms ease;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.text-input,
+select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  background: #121214;
+  outline: none;
+}
+
+.text-input:focus,
+select:focus,
+input[type="range"]:focus,
+button:focus-visible {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(61, 214, 208, 0.22);
+}
+
+.text-input.compact {
+  min-height: 34px;
+  margin-bottom: 10px;
+}
+
+.stage-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.view-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.view-tab {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: #141416;
+}
+
+.view-tab.active {
+  border-color: rgba(61, 214, 208, 0.75);
+  color: #061514;
+  background: var(--cyan);
+  font-weight: 700;
+}
+
+.stage-pill,
+.ghost-button,
+.primary-button,
+.small-button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.stage-pill {
+  padding: 6px 10px;
+  color: var(--muted);
+}
+
+.stage-pill.active {
+  border-color: rgba(61, 214, 208, 0.75);
+  color: #061514;
+  background: var(--cyan);
+}
+
+.lesson-list {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 24px;
+}
+
+.lesson-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 70px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
+  background: #202024;
+}
+
+.lesson-row strong,
+.lesson-row small,
+.lesson-row em {
+  display: block;
+}
+
+.lesson-row small,
+.lesson-row em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.lesson-row.active {
+  border-color: var(--cyan);
+  background: #1b2b2c;
+}
+
+.lesson-row.completed em {
+  color: var(--green);
+}
+
+.wiki-shell {
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+}
+
+.wiki-list {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 24px;
+}
+
+.wiki-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 76px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
+  background: #202024;
+}
+
+.wiki-row strong,
+.wiki-row small,
+.wiki-row em {
+  display: block;
+}
+
+.wiki-row strong {
+  overflow-wrap: anywhere;
+}
+
+.wiki-row small,
+.wiki-row em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.wiki-row.active {
+  border-color: var(--cyan);
+  background: #1b2b2c;
+}
+
+.wiki-row.featured em {
+  color: var(--amber);
+}
+
+.empty-state,
+.muted-note {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.lesson-title-band {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.lesson-title-band > div:first-child {
+  min-width: 0;
+}
+
+.lesson-actions {
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: flex-end;
+  min-width: 260px;
+}
+
+.ghost-button,
+.primary-button,
+.small-button {
+  padding: 8px 12px;
+}
+
+.primary-button {
+  border-color: var(--amber);
+  color: #1a1200;
+  background: var(--amber);
+}
+
+.canvas-section {
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: #0f1012;
+}
+
+.canvas-host {
+  position: relative;
+  width: 100%;
+  height: min(58vh, 620px);
+  min-height: 380px;
+  background: #0f1012;
+}
+
+.lesson-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.runtime-status {
+  min-height: 40px;
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: #171719;
+}
+
+.study-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding-bottom: 28px;
+}
+
+.study-panel {
+  padding: 14px;
+}
+
+.study-panel ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.mental-model {
+  border-left: 3px solid var(--cyan);
+  padding-left: 12px;
+  color: #d7f8f5;
+}
+
+.panel-section {
+  padding: 13px;
+  margin-bottom: 12px;
+}
+
+.section-heading {
+  margin-bottom: 10px;
+}
+
+.section-heading h3 {
+  margin-bottom: 0;
+}
+
+.section-heading span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.metric-cell {
+  display: block;
+  min-height: 64px;
+  border: 1px solid #38363d;
+  border-radius: 6px;
+  padding: 9px;
+  background: #131315;
+}
+
+.metric-cell span,
+.metric-cell strong {
+  display: block;
+}
+
+.metric-cell span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.metric-cell strong {
+  margin-top: 8px;
+  color: var(--green);
+  font-size: 1.15rem;
+}
+
+.control-stack,
+.exercise-stack,
+.term-list {
+  display: grid;
+  gap: 10px;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 130px);
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #38363d;
+  border-radius: 6px;
+  padding: 10px;
+  background: #151517;
+}
+
+.control-copy strong,
+.control-copy small {
+  display: block;
+}
+
+.control-copy strong {
+  margin-bottom: 4px;
+  font-size: 0.92rem;
+}
+
+.control-copy small {
+  font-size: 0.78rem;
+}
+
+.range-pack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--cyan);
+}
+
+input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  justify-self: end;
+  accent-color: var(--green);
+}
+
+input[type="color"] {
+  justify-self: end;
+  width: 58px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px;
+  background: #111;
+}
+
+output {
+  color: var(--amber);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.small-button {
+  justify-self: end;
+  min-width: 96px;
+  background: #26212b;
+}
+
+.exercise-item,
+.term-item {
+  border: 1px solid #38363d;
+  border-radius: 6px;
+  padding: 10px;
+  background: #151517;
+}
+
+.exercise-item {
+  align-items: flex-start;
+}
+
+.exercise-item p,
+.term-item p {
+  margin: 6px 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.exercise-item span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--amber);
+  font-size: 0.75rem;
+  background: rgba(244, 195, 91, 0.12);
+}
+
+.exercise-item.passed {
+  border-color: rgba(139, 212, 111, 0.65);
+}
+
+.exercise-item.passed span {
+  color: #10230c;
+  background: var(--green);
+}
+
+.term-item strong {
+  display: block;
+}
+
+.term-item strong span {
+  color: var(--cyan);
+  font-size: 0.82rem;
+}
+
+.term-button {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+}
+
+.term-button:hover,
+.wiki-row:hover,
+.lesson-row:hover,
+.link-chip:hover {
+  border-color: rgba(61, 214, 208, 0.68);
+}
+
+.wiki-workspace {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.wiki-title-band,
+.wiki-section,
+.wiki-visual {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.wiki-title-band {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.wiki-title-band h2 {
+  margin-bottom: 6px;
+}
+
+.wiki-title-band p {
+  margin-bottom: 0;
+}
+
+.wiki-summary {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.wiki-tag-list,
+.link-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wiki-tag-list span,
+.link-chip {
+  border: 1px solid #38363d;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: var(--muted);
+  background: #141416;
+  font-size: 0.82rem;
+}
+
+.link-chip {
+  max-width: 100%;
+  color: var(--text);
+  text-align: left;
+}
+
+.wiki-visual-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.wiki-visual {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  background: #101012;
+}
+
+.wiki-visual img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #0f1012;
+}
+
+.wiki-visual figcaption {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
+.wiki-visual figcaption strong {
+  color: #d7f8f5;
+}
+
+.wiki-visual figcaption span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.wiki-section-grid,
+.wiki-related-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.wiki-section {
+  padding: 14px;
+}
+
+.wiki-section p,
+.wiki-section li {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.wiki-section ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.wiki-mistakes {
+  border-left: 3px solid var(--coral);
+}
+
+.wiki-diagram {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  padding: 22px;
+  background:
+    linear-gradient(135deg, rgba(61, 214, 208, 0.1), transparent 38%),
+    radial-gradient(circle at 72% 24%, rgba(244, 195, 91, 0.16), transparent 26%),
+    #0f1012;
+}
+
+.diagram-node,
+.diagram-flow span,
+.diagram-attributes strong,
+.diagram-attributes em,
+.diagram-bars label,
+.diagram-budget label,
+.diagram-bars strong,
+.diagram-budget strong {
+  border: 1px solid #3a454b;
+  border-radius: 7px;
+  color: var(--text);
+  background: #171b1d;
+}
+
+.accent-node,
+.diagram-flow span.accent-node,
+.diagram-tree .accent-node {
+  border-color: rgba(244, 195, 91, 0.85);
+  color: #1a1200;
+  background: var(--amber);
+}
+
+.diagram-tree {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: min(520px, 100%);
+  text-align: center;
+}
+
+.diagram-tree .root-node {
+  grid-column: 1 / -1;
+  border-color: rgba(61, 214, 208, 0.8);
+  color: #061514;
+  background: var(--cyan);
+}
+
+.diagram-line {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--line);
+}
+
+.diagram-node {
+  padding: 12px 10px;
+}
+
+.diagram-frustum {
+  position: relative;
+  width: min(520px, 100%);
+  height: 200px;
+}
+
+.camera-dot,
+.target-dot,
+.near-plane,
+.far-plane,
+.light-source {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid #3a454b;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--text);
+  background: #171b1d;
+  font-size: 0.82rem;
+}
+
+.camera-dot {
+  left: 0;
+  top: 82px;
+  border-color: rgba(61, 214, 208, 0.8);
+}
+
+.target-dot {
+  right: 12px;
+  top: 88px;
+  border-color: rgba(244, 195, 91, 0.8);
+}
+
+.near-plane {
+  left: 150px;
+  top: 16px;
+}
+
+.far-plane {
+  right: 60px;
+  bottom: 12px;
+}
+
+.frustum-shape {
+  position: absolute;
+  inset: 34px 56px 34px 92px;
+  border: 2px solid rgba(61, 214, 208, 0.62);
+  transform: perspective(320px) rotateY(26deg);
+  background: linear-gradient(90deg, rgba(61, 214, 208, 0.16), rgba(244, 195, 91, 0.08));
+  clip-path: polygon(0 35%, 100% 0, 100% 100%, 0 65%);
+}
+
+.diagram-attributes {
+  display: grid;
+  grid-template-columns: 0.7fr repeat(3, 1fr);
+  gap: 8px;
+  width: min(560px, 100%);
+}
+
+.diagram-attributes span,
+.diagram-attributes strong,
+.diagram-attributes em {
+  min-width: 0;
+  padding: 10px 8px;
+  overflow-wrap: anywhere;
+  font-style: normal;
+  text-align: center;
+}
+
+.diagram-attributes span {
+  color: var(--cyan);
+}
+
+.diagram-bars,
+.diagram-budget {
+  display: grid;
+  gap: 12px;
+  width: min(500px, 100%);
+}
+
+.diagram-bars label,
+.diagram-budget label {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+}
+
+.diagram-bars i,
+.diagram-budget i {
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--cyan) var(--bar), #30343a var(--bar));
+}
+
+.diagram-bars strong,
+.diagram-budget strong {
+  justify-self: center;
+  padding: 10px 14px;
+  color: var(--amber);
+}
+
+.diagram-light {
+  position: relative;
+  width: min(520px, 100%);
+  height: 220px;
+}
+
+.light-source {
+  left: 28px;
+  top: 28px;
+  border-color: rgba(244, 195, 91, 0.85);
+  color: #1a1200;
+  background: var(--amber);
+}
+
+.light-beam {
+  position: absolute;
+  left: 96px;
+  top: 58px;
+  width: 250px;
+  height: 82px;
+  background: linear-gradient(90deg, rgba(244, 195, 91, 0.36), transparent);
+  clip-path: polygon(0 34%, 100% 0, 100% 100%, 0 66%);
+}
+
+.lit-object {
+  position: absolute;
+  right: 150px;
+  bottom: 58px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, #ffffff, var(--cyan) 38%, #1c6060 78%);
+  box-shadow: 0 0 26px rgba(61, 214, 208, 0.28);
+}
+
+.shadow-shape {
+  position: absolute;
+  right: 70px;
+  bottom: 38px;
+  width: 150px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.46);
+  transform: skewX(-28deg);
+}
+
+.ground-line {
+  position: absolute;
+  right: 24px;
+  bottom: 32px;
+  left: 32px;
+  height: 2px;
+  background: #35383c;
+}
+
+.diagram-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(620px, 100%);
+}
+
+.diagram-flow span {
+  min-width: 96px;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.diagram-flow i {
+  width: 28px;
+  height: 2px;
+  background: var(--cyan);
+}
+
+.source-panel pre {
+  max-height: 360px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #38363d;
+  border-radius: 6px;
+  padding: 12px;
+  color: #d7f8f5;
+  background: #101012;
+}
+
+.source-panel code {
+  display: block;
+  white-space: pre;
+  tab-size: 2;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.tok-keyword {
+  color: #ff9fb5;
+  font-weight: 700;
+}
+
+.tok-namespace {
+  color: #78e5df;
+  font-weight: 700;
+}
+
+.tok-type {
+  color: #bda7ff;
+}
+
+.tok-function {
+  color: #f7d36f;
+}
+
+.tok-string {
+  color: #9fe870;
+}
+
+.tok-number,
+.tok-literal {
+  color: #ffb078;
+}
+
+.tok-comment {
+  color: #7f8794;
+  font-style: italic;
+}
+
+.tok-operator {
+  color: #c9d2dc;
+}
+
+@media (max-width: 1240px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-shell {
+    grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .inspector {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .panel-section {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar,
+  .workspace,
+  .inspector {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    border-right: 0;
+    border-left: 0;
+  }
+
+  .lesson-title-band,
+  .study-grid,
+  .inspector,
+  .wiki-visual-grid,
+  .wiki-section-grid,
+  .wiki-related-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-actions {
+    justify-content: stretch;
+    min-width: 0;
+  }
+
+.lesson-actions button {
+  flex: 1;
+}
+
+  .canvas-host {
+    height: 420px;
+    min-height: 360px;
+  }
+
+  .control-row {
+    grid-template-columns: 1fr;
+  }
+
+  .small-button,
+  input[type="checkbox"],
+  input[type="color"] {
+    justify-self: stretch;
+  }
+
+  .wiki-diagram {
+    min-height: 220px;
+    padding: 16px;
+  }
+
+  .diagram-tree,
+  .diagram-attributes {
+    grid-template-columns: 1fr;
+  }
+
+  .diagram-tree .root-node,
+  .diagram-line {
+    grid-column: auto;
+  }
+
+  .diagram-bars label,
+  .diagram-budget label {
+    grid-template-columns: 1fr;
+  }
+
+  .diagram-flow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .diagram-flow i {
+    justify-self: center;
+    width: 2px;
+    height: 20px;
+  }
+
+  .diagram-frustum,
+  .diagram-light {
+    transform: scale(0.88);
+    transform-origin: center;
+  }
+}
