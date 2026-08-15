@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Persistent Three Runtime</title>
+  <style>
+    html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#060910; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    canvas { display:block; width:100%; height:100%; }
+    .hud { position:fixed; z-index:4; pointer-events:none; top:52px; left:12px; display:flex; flex-direction:column; gap:7px; }
+    .pill { width:max-content; max-width:calc(100vw - 24px); border:1px solid rgba(255,255,255,.1); background:rgba(7,10,18,.7); backdrop-filter:blur(10px); border-radius:9px; padding:7px 9px; color:#94a1b9; font-size:10px; box-shadow:0 10px 30px rgba(0,0,0,.2); }
+    .pill b { color:#eaf0ff; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .ready { color:#77e9ad; }
+    .hint { position:fixed; right:12px; bottom:12px; z-index:4; border:1px solid rgba(255,255,255,.08); background:rgba(7,10,18,.66); color:#8390a8; padding:7px 9px; border-radius:9px; font-size:10px; pointer-events:none; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="hud">
+    <div class="pill"><span class="ready">●</span> WebGL Runtime alive</div>
+    <div class="pill">bootId <b id="boot">—</b></div>
+    <div class="pill">Bridge <b id="bridge">waiting</b></div>
+  </div>
+  <div class="hint">拖拽旋转 / 滚轮缩放 / 点击物体触发 object.click</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const bootId = crypto.randomUUID();
+document.getElementById('boot').textContent = bootId.slice(0, 8);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x070b13);
+scene.fog = new THREE.Fog(0x070b13, 10, 24);
+
+const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 100);
+camera.position.set(5.2, 3.9, 6.2);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 0.8, 0);
+
+scene.add(new THREE.HemisphereLight(0xaac8ff, 0x182033, 1.8));
+const key = new THREE.DirectionalLight(0xffffff, 3.6);
+key.position.set(4, 7, 5);
+scene.add(key);
+const rim = new THREE.PointLight(0x567cff, 42, 16, 2);
+rim.position.set(-4, 3, -4);
+scene.add(rim);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(7, 72),
+  new THREE.MeshStandardMaterial({ color: 0x101725, roughness: 0.92, metalness: 0.06 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.02;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(12, 24, 0x33425f, 0x182238);
+grid.material.opacity = 0.42;
+grid.material.transparent = true;
+scene.add(grid);
+
+const cubeMat = new THREE.MeshStandardMaterial({ color: 0x4f82ff, roughness: 0.28, metalness: 0.2, emissive: 0x102a66, emissiveIntensity: 0.5 });
+const cube = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), cubeMat);
+cube.position.set(0, 0.86, 0);
+cube.userData.objectId = 'cube';
+scene.add(cube);
+
+const ring = new THREE.Mesh(
+  new THREE.TorusGeometry(1.5, 0.08, 18, 96),
+  new THREE.MeshStandardMaterial({ color: 0x73e2b7, emissive: 0x174d3c, emissiveIntensity: 0.75, metalness: 0.3, roughness: 0.25 })
+);
+ring.rotation.x = Math.PI / 2;
+ring.position.set(0, 0.78, 0);
+ring.userData.objectId = 'ring';
+scene.add(ring);
+
+const sphere = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(0.58, 2),
+  new THREE.MeshStandardMaterial({ color: 0xffb45d, roughness: 0.38, metalness: 0.1 })
+);
+sphere.position.set(-2.4, 0.65, -1.1);
+sphere.userData.objectId = 'sphere';
+scene.add(sphere);
+
+const marker = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.34, 0.48, 1.25, 24),
+  new THREE.MeshStandardMaterial({ color: 0x8e72ff, roughness: 0.3, metalness: 0.22 })
+);
+marker.position.set(2.5, 0.64, -0.7);
+marker.userData.objectId = 'marker';
+scene.add(marker);
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const clickable = [cube, sphere, marker, ring];
+let port = null;
+let spin = true;
+let altView = false;
+let highlightUntil = 0;
+
+const emit = (name, payload = {}) => {
+  port?.postMessage({ type: 'event', name, payload, bootId });
+};
+
+const resize = () => {
+  const width = Math.max(1, innerWidth);
+  const height = Math.max(1, innerHeight);
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+};
+addEventListener('resize', resize);
+resize();
+
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObjects(clickable, false)[0]?.object;
+  if (!hit) return;
+  emit('object.click', { objectId: hit.userData.objectId || 'unknown' });
+});
+
+const handleCommand = (message) => {
+  if (!message || message.type !== 'command') return;
+  const { name } = message;
+  if (name === 'object.highlight') {
+    highlightUntil = performance.now() + 1100;
+    cube.scale.setScalar(1.16);
+    cubeMat.emissive.setHex(0x3d78ff);
+    cubeMat.emissiveIntensity = 2.8;
+    emit('object.highlighted', { objectId: 'cube' });
+    return;
+  }
+  if (name === 'scene.toggleSpin') {
+    spin = !spin;
+    emit('scene.spinChanged', { spinning: spin });
+    return;
+  }
+  if (name === 'camera.toggleView') {
+    altView = !altView;
+    camera.position.set(...(altView ? [2.8, 6.8, 3.2] : [5.2, 3.9, 6.2]));
+    controls.target.set(0, 0.8, 0);
+    controls.update();
+    emit('camera.changed', { preset: altView ? 'top' : 'perspective' });
+    return;
+  }
+  if (name === 'object.randomColor') {
+    const color = new THREE.Color().setHSL(Math.random(), 0.72, 0.58);
+    cubeMat.color.copy(color);
+    emit('object.colorChanged', { objectId: 'cube', color: `#${color.getHexString()}` });
+  }
+};
+
+addEventListener('message', (event) => {
+  if (event.origin !== location.origin || event.data?.type !== 'THREE_CONNECT' || !event.ports?.[0]) return;
+  port?.close?.();
+  port = event.ports[0];
+  port.onmessage = (e) => handleCommand(e.data);
+  port.start?.();
+  document.getElementById('bridge').textContent = 'connected';
+  emit('ready', { bootId });
+});
+
+parent.postMessage({ source: 'three-runtime', type: 'THREE_READY', bootId }, location.origin);
+
+const clock = new THREE.Clock();
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (spin) {
+    cube.rotation.y += dt * 0.62;
+    ring.rotation.z -= dt * 0.34;
+    sphere.rotation.y -= dt * 0.38;
+  }
+  if (performance.now() > highlightUntil && cube.scale.x > 1.001) {
+    cube.scale.lerp(new THREE.Vector3(1, 1, 1), 0.09);
+    cubeMat.emissive.lerp(new THREE.Color(0x102a66), 0.08);
+    cubeMat.emissiveIntensity += (0.5 - cubeMat.emissiveIntensity) * 0.08;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+frame();
+</script>
+</body>
+</html>

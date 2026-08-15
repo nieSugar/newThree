@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Low-code Canvas</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f17;
+      --panel: #121826;
+      --panel-2: #171f30;
+      --line: rgba(255,255,255,.08);
+      --text: #eff3ff;
+      --muted: #8c98b2;
+      --blue: #79a8ff;
+      --green: #5ee7a5;
+      --amber: #ffc76b;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+    body { min-height: 680px; display: grid; grid-template-rows: 54px 1fr; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(16,21,32,.96);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .logo { margin-right: auto; display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 700; }
+    .logo-mark { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg,#78a9ff,#8d7dff); box-shadow: 0 6px 20px rgba(120,169,255,.25); }
+    .tool { border: 1px solid var(--line); background: rgba(255,255,255,.035); color: #c8d2e8; border-radius: 8px; padding: 7px 9px; font-size: 11px; }
+    .workspace { min-height: 0; display: grid; grid-template-columns: 150px minmax(0,1fr) 190px; }
+    .rail, .props { background: #0f141f; padding: 12px; }
+    .rail { border-right: 1px solid var(--line); }
+    .props { border-left: 1px solid var(--line); }
+    .section-title { color: #697791; text-transform: uppercase; font-size: 9px; letter-spacing: .12em; margin: 4px 0 9px; }
+    .item { padding: 8px 9px; border-radius: 8px; margin-bottom: 5px; color: #acb8ce; font-size: 11px; border: 1px solid transparent; }
+    .item.active { color: white; background: rgba(120,169,255,.1); border-color: rgba(120,169,255,.18); }
+    .canvas-wrap {
+      padding: 18px;
+      overflow: auto;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        #0b1019;
+      background-size: 20px 20px;
+    }
+    .page {
+      min-height: 590px;
+      border-radius: 15px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+      padding: 18px;
+      position: relative;
+      box-shadow: 0 18px 50px rgba(0,0,0,.2);
+    }
+    .page h2 { font-size: 16px; margin: 0; }
+    .page .subtitle { color: var(--muted); font-size: 11px; margin: 5px 0 17px; line-height: 1.6; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(17,23,35,.82); }
+    .card.wide { grid-column: 1 / -1; }
+    .card h3 { margin: 0 0 6px; font-size: 12px; }
+    .card p { margin: 0 0 11px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+    .row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    button {
+      appearance: none;
+      border: 1px solid rgba(120,169,255,.24);
+      background: rgba(120,169,255,.11);
+      color: #dce8ff;
+      border-radius: 9px;
+      padding: 8px 10px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: .16s ease;
+    }
+    button:hover { transform: translateY(-1px); background: rgba(120,169,255,.18); }
+    button.strong { border-color: rgba(94,231,165,.28); background: rgba(94,231,165,.1); color: #c8fbe4; }
+    button.warn { border-color: rgba(255,199,107,.28); background: rgba(255,199,107,.09); color: #ffe3ad; }
+    .status {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .kv { border: 1px solid var(--line); border-radius: 9px; padding: 8px; min-width: 0; }
+    .kv span { display: block; color: #6f7d97; font-size: 9px; margin-bottom: 4px; }
+    .kv b { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; color: #dce5f8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    input[type="range"] { width: 100%; accent-color: #78a9ff; }
+    .event-box { min-height: 50px; border: 1px dashed rgba(255,255,255,.1); border-radius: 10px; padding: 9px; color: #9caac3; font-size: 10px; line-height: 1.5; background: rgba(0,0,0,.12); }
+    label { color: #8e9ab2; font-size: 10px; display: block; margin-bottom: 6px; }
+    .prop-line { margin-bottom: 13px; }
+    .prop-box { height: 28px; border: 1px solid var(--line); border-radius: 7px; background: #141b29; display: flex; align-items: center; padding: 0 8px; color: #b6c2d7; font-size: 10px; }
+    @media (max-width: 780px) {
+      .workspace { grid-template-columns: 1fr; }
+      .rail, .props { display: none; }
+      .canvas-wrap { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="logo"><span class="logo-mark"></span>TinyEngine-like Canvas</div>
+    <span class="tool">设计</span><span class="tool">预览</span><span class="tool">DSL</span>
+  </div>
+  <div class="workspace">
+    <aside class="rail">
+      <div class="section-title">Layers</div>
+      <div class="item active">Page / Demo</div>
+      <div class="item">Header</div>
+      <div class="item">Controls</div>
+      <div class="item">ThreeViewport</div>
+      <div class="section-title" style="margin-top:18px">Materials</div>
+      <div class="item">Button</div>
+      <div class="item">Panel</div>
+      <div class="item">Three Bridge</div>
+    </aside>
+
+    <main class="canvas-wrap">
+      <section class="page">
+        <h2>设备监控 Demo</h2>
+        <p class="subtitle">这里模拟低代码页面。按钮通过 AppShell 的 ThreeBridge 控制右侧真实 Three.js iframe；这个 Canvas 自身可以被 reload。</p>
+        <div class="grid">
+          <article class="card">
+            <h3>低代码 → Three.js</h3>
+            <p>语义命令通过 MessageChannel 发送，不直接耦合 Three 内部对象。</p>
+            <div class="row">
+              <button id="highlight">高亮立方体</button>
+              <button id="spin">切换旋转</button>
+              <button id="camera">切换视角</button>
+              <button id="color">随机颜色</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Three.js → 低代码</h3>
+            <p>直接点击右侧 3D 对象。Raycaster 选中后会把 object.click 事件送回这里。</p>
+            <div class="event-box" id="event-box">等待 Three.js 事件…</div>
+          </article>
+
+          <article class="card wide">
+            <h3>3D 视口尺寸</h3>
+            <p>改变 AppShell 中 persistent iframe 所在面板的宽度，不重建 WebGL Runtime。</p>
+            <label>Three pane width: <b id="width-value">52%</b></label>
+            <input id="width" type="range" min="40" max="66" value="52" />
+          </article>
+
+          <article class="card wide">
+            <h3>生命周期证明</h3>
+            <p>点击下面按钮会真正 reload 当前低代码 Canvas iframe。刷新后本页 bootId 会改变，而右侧 Three bootId 和 Three loads 应保持不变。</p>
+            <div class="row">
+              <button class="strong" id="reload">刷新低代码 Canvas（3D 不刷新）</button>
+              <button class="warn" id="request">重新读取 AppShell 状态</button>
+            </div>
+            <div class="status">
+              <div class="kv"><span>Canvas bootId</span><b id="canvas-boot">—</b></div>
+              <div class="kv"><span>Canvas loads</span><b id="canvas-loads">—</b></div>
+              <div class="kv"><span>Three bootId</span><b id="three-boot">—</b></div>
+              <div class="kv"><span>Three loads</span><b id="three-loads">—</b></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <aside class="props">
+      <div class="section-title">Properties</div>
+      <div class="prop-line"><label>componentName</label><div class="prop-box">ThreeViewport</div></div>
+      <div class="prop-line"><label>runtimeMode</label><div class="prop-box">persistent</div></div>
+      <div class="prop-line"><label>bridge</label><div class="prop-box">MessageChannel</div></div>
+      <div class="prop-line"><label>position</label><div class="prop-box">AppShell managed</div></div>
+      <div class="prop-line"><label>designMode</label><div class="prop-box">interactive demo</div></div>
+    </aside>
+  </div>
+
+<script>
+(() => {
+  const bootId = crypto.randomUUID();
+  const $ = (id) => document.getElementById(id);
+  $('canvas-boot').textContent = bootId.slice(0, 8);
+
+  const send = (data) => parent.postMessage({ source: 'lowcode-canvas', ...data }, location.origin);
+  const command = (name, payload = {}) => send({ type: 'three-command', name, payload });
+
+  $('highlight').onclick = () => command('object.highlight', { objectId: 'cube' });
+  $('spin').onclick = () => command('scene.toggleSpin');
+  $('camera').onclick = () => command('camera.toggleView');
+  $('color').onclick = () => command('object.randomColor', { objectId: 'cube' });
+  $('reload').onclick = () => send({ type: 'reload-canvas' });
+  $('request').onclick = () => send({ type: 'request-shell-state' });
+  $('width').oninput = (event) => {
+    const value = Number(event.target.value);
+    $('width-value').textContent = `${value}%`;
+    send({ type: 'resize-three', width: value });
+  };
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== location.origin || event.data?.source !== 'app-shell') return;
+    const data = event.data;
+    if (data.type === 'three-event') {
+      const msg = data.event || {};
+      const payload = msg.payload ? JSON.stringify(msg.payload) : '{}';
+      $('event-box').textContent = `${msg.name || 'event'}  ${payload}`;
+    }
+    if (data.type === 'shell-state') {
+      const shell = data.state || {};
+      if (shell.canvasLoads != null) $('canvas-loads').textContent = String(shell.canvasLoads);
+      if (shell.threeLoads != null) $('three-loads').textContent = String(shell.threeLoads);
+      if (shell.bootId) $('three-boot').textContent = String(shell.bootId).slice(0, 8);
+    }
+  });
+
+  send({ type: 'request-shell-state' });
+})();
+</script>
+</body>
+</html>
