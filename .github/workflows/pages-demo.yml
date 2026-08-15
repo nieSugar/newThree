@@ -1,0 +1,30 @@
+name: Pages Demo E2E
+
+on:
+  push:
+    branches:
+      - gh-pages
+    paths:
+      - 'index.html'
+      - 'canvas.html'
+      - 'three.html'
+      - 'tests/e2e/pages-demo.spec.ts'
+      - '.github/workflows/pages-demo.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Pages demo E2E
+        run: npx playwright test tests/e2e/pages-demo.spec.ts --project=desktop
