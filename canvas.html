@@ -3,218 +3,277 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Low-code Canvas</title>
+  <title>Low-code Dynamic Pages</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0b0f17;
-      --panel: #121826;
-      --panel-2: #171f30;
-      --line: rgba(255,255,255,.08);
-      --text: #eff3ff;
-      --muted: #8c98b2;
-      --blue: #79a8ff;
-      --green: #5ee7a5;
-      --amber: #ffc76b;
-    }
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
-    body { min-height: 680px; display: grid; grid-template-rows: 54px 1fr; }
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 12px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(16,21,32,.96);
-      position: sticky;
-      top: 0;
-      z-index: 5;
-    }
-    .logo { margin-right: auto; display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 700; }
-    .logo-mark { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg,#78a9ff,#8d7dff); box-shadow: 0 6px 20px rgba(120,169,255,.25); }
-    .tool { border: 1px solid var(--line); background: rgba(255,255,255,.035); color: #c8d2e8; border-radius: 8px; padding: 7px 9px; font-size: 11px; }
-    .workspace { min-height: 0; display: grid; grid-template-columns: 150px minmax(0,1fr) 190px; }
-    .rail, .props { background: #0f141f; padding: 12px; }
-    .rail { border-right: 1px solid var(--line); }
-    .props { border-left: 1px solid var(--line); }
-    .section-title { color: #697791; text-transform: uppercase; font-size: 9px; letter-spacing: .12em; margin: 4px 0 9px; }
-    .item { padding: 8px 9px; border-radius: 8px; margin-bottom: 5px; color: #acb8ce; font-size: 11px; border: 1px solid transparent; }
-    .item.active { color: white; background: rgba(120,169,255,.1); border-color: rgba(120,169,255,.18); }
-    .canvas-wrap {
-      padding: 18px;
-      overflow: auto;
-      background:
-        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
-        #0b1019;
-      background-size: 20px 20px;
-    }
-    .page {
-      min-height: 590px;
-      border-radius: 15px;
-      border: 1px solid rgba(255,255,255,.09);
-      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
-      padding: 18px;
-      position: relative;
-      box-shadow: 0 18px 50px rgba(0,0,0,.2);
-    }
-    .page h2 { font-size: 16px; margin: 0; }
-    .page .subtitle { color: var(--muted); font-size: 11px; margin: 5px 0 17px; line-height: 1.6; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-    .card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(17,23,35,.82); }
-    .card.wide { grid-column: 1 / -1; }
-    .card h3 { margin: 0 0 6px; font-size: 12px; }
-    .card p { margin: 0 0 11px; color: var(--muted); font-size: 10px; line-height: 1.55; }
-    .row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
-    button {
-      appearance: none;
-      border: 1px solid rgba(120,169,255,.24);
-      background: rgba(120,169,255,.11);
-      color: #dce8ff;
-      border-radius: 9px;
-      padding: 8px 10px;
-      font-size: 10px;
-      cursor: pointer;
-      transition: .16s ease;
-    }
-    button:hover { transform: translateY(-1px); background: rgba(120,169,255,.18); }
-    button.strong { border-color: rgba(94,231,165,.28); background: rgba(94,231,165,.1); color: #c8fbe4; }
-    button.warn { border-color: rgba(255,199,107,.28); background: rgba(255,199,107,.09); color: #ffe3ad; }
-    .status {
-      display: grid;
-      grid-template-columns: repeat(2,minmax(0,1fr));
-      gap: 7px;
-      margin-top: 10px;
-    }
-    .kv { border: 1px solid var(--line); border-radius: 9px; padding: 8px; min-width: 0; }
-    .kv span { display: block; color: #6f7d97; font-size: 9px; margin-bottom: 4px; }
-    .kv b { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; color: #dce5f8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    input[type="range"] { width: 100%; accent-color: #78a9ff; }
-    .event-box { min-height: 50px; border: 1px dashed rgba(255,255,255,.1); border-radius: 10px; padding: 9px; color: #9caac3; font-size: 10px; line-height: 1.5; background: rgba(0,0,0,.12); }
-    label { color: #8e9ab2; font-size: 10px; display: block; margin-bottom: 6px; }
-    .prop-line { margin-bottom: 13px; }
-    .prop-box { height: 28px; border: 1px solid var(--line); border-radius: 7px; background: #141b29; display: flex; align-items: center; padding: 0 8px; color: #b6c2d7; font-size: 10px; }
-    @media (max-width: 780px) {
-      .workspace { grid-template-columns: 1fr; }
-      .rail, .props { display: none; }
-      .canvas-wrap { padding: 10px; }
-    }
+    :root { color-scheme:dark; --bg:#0b0f17; --panel:#121826; --panel-2:#171f30; --line:rgba(255,255,255,.08); --text:#eff3ff; --muted:#8c98b2; --blue:#79a8ff; --green:#5ee7a5; --amber:#ffc76b; }
+    * { box-sizing:border-box; }
+    html,body { width:100%; height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    body { min-height:680px; display:grid; grid-template-rows:54px 1fr; }
+    .toolbar { display:flex; align-items:center; gap:8px; padding:0 12px; border-bottom:1px solid var(--line); background:rgba(16,21,32,.96); position:sticky; top:0; z-index:5; }
+    .logo { margin-right:auto; display:flex; align-items:center; gap:9px; font-size:12px; font-weight:700; }
+    .logo-mark { width:22px; height:22px; border-radius:7px; background:linear-gradient(135deg,#78a9ff,#8d7dff); box-shadow:0 6px 20px rgba(120,169,255,.25); }
+    .tool { border:1px solid var(--line); background:rgba(255,255,255,.035); color:#c8d2e8; border-radius:8px; padding:7px 9px; font-size:11px; }
+    .tool b { color:#fff; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .workspace { min-height:0; display:grid; grid-template-columns:160px minmax(0,1fr) 200px; }
+    .rail,.props { background:#0f141f; padding:12px; }
+    .rail { border-right:1px solid var(--line); }
+    .props { border-left:1px solid var(--line); }
+    .section-title { color:#697791; text-transform:uppercase; font-size:9px; letter-spacing:.12em; margin:4px 0 9px; }
+    .item { padding:8px 9px; border-radius:8px; margin-bottom:5px; color:#acb8ce; font-size:11px; border:1px solid transparent; cursor:pointer; transition:.15s ease; }
+    .item:hover { background:rgba(255,255,255,.035); }
+    .item.active { color:white; background:rgba(120,169,255,.1); border-color:rgba(120,169,255,.18); }
+    .canvas-wrap { padding:18px; overflow:auto; background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),#0b1019; background-size:20px 20px; }
+    .page { min-height:590px; border-radius:15px; border:1px solid rgba(255,255,255,.09); background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)); padding:18px; position:relative; box-shadow:0 18px 50px rgba(0,0,0,.2); }
+    .page-head { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
+    .page h2 { font-size:16px; margin:0; }
+    .page .subtitle { color:var(--muted); font-size:11px; margin:5px 0 0; line-height:1.6; }
+    .page-badge { border:1px solid rgba(94,231,165,.22); background:rgba(94,231,165,.08); color:#bff6da; border-radius:9px; padding:6px 8px; font-size:9px; white-space:nowrap; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .card { border:1px solid var(--line); border-radius:12px; padding:12px; background:rgba(17,23,35,.82); }
+    .card.wide { grid-column:1/-1; }
+    .card h3 { margin:0 0 6px; font-size:12px; }
+    .card p { margin:0 0 11px; color:var(--muted); font-size:10px; line-height:1.55; }
+    .row { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+    button { appearance:none; border:1px solid rgba(120,169,255,.24); background:rgba(120,169,255,.11); color:#dce8ff; border-radius:9px; padding:8px 10px; font-size:10px; cursor:pointer; transition:.16s ease; }
+    button:hover { transform:translateY(-1px); background:rgba(120,169,255,.18); }
+    button.strong { border-color:rgba(94,231,165,.28); background:rgba(94,231,165,.1); color:#c8fbe4; }
+    button.warn { border-color:rgba(255,199,107,.28); background:rgba(255,199,107,.09); color:#ffe3ad; }
+    .device-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .device { border:1px solid var(--line); background:rgba(255,255,255,.025); border-radius:10px; padding:10px; }
+    .device b { display:block; font-size:11px; margin-bottom:4px; }
+    .device span { display:block; color:var(--muted); font-size:9px; line-height:1.55; }
+    .device code { color:#a9b9d4; }
+    .metric-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .metric { border:1px solid var(--line); background:rgba(255,255,255,.025); border-radius:10px; padding:10px; }
+    .metric span { display:block; color:#6f7d97; font-size:9px; margin-bottom:5px; }
+    .metric b { display:block; font-size:14px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .status { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:10px; }
+    .kv { border:1px solid var(--line); border-radius:9px; padding:8px; min-width:0; }
+    .kv span { display:block; color:#6f7d97; font-size:9px; margin-bottom:4px; }
+    .kv b { display:block; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; color:#dce5f8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    input[type="range"] { width:100%; accent-color:#78a9ff; }
+    .event-box { min-height:50px; border:1px dashed rgba(255,255,255,.1); border-radius:10px; padding:9px; color:#9caac3; font-size:10px; line-height:1.5; background:rgba(0,0,0,.12); }
+    label { color:#8e9ab2; font-size:10px; display:block; margin-bottom:6px; }
+    .prop-line { margin-bottom:13px; }
+    .prop-box { min-height:28px; border:1px solid var(--line); border-radius:7px; background:#141b29; display:flex; align-items:center; padding:6px 8px; color:#b6c2d7; font-size:10px; word-break:break-all; }
+    @media(max-width:780px){ .workspace{grid-template-columns:1fr}.rail,.props{display:none}.canvas-wrap{padding:10px}.device-list,.metric-grid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.card.wide{grid-column:auto} }
   </style>
 </head>
 <body>
   <div class="toolbar">
-    <div class="logo"><span class="logo-mark"></span>TinyEngine-like Canvas</div>
-    <span class="tool">设计</span><span class="tool">预览</span><span class="tool">DSL</span>
+    <div class="logo"><span class="logo-mark"></span>TinyEngine-like Runtime</div>
+    <span class="tool">Page <b id="current-page">overview</b></span>
+    <span class="tool">设计</span><span class="tool">预览</span>
   </div>
   <div class="workspace">
     <aside class="rail">
-      <div class="section-title">Layers</div>
-      <div class="item active">Page / Demo</div>
-      <div class="item">Header</div>
-      <div class="item">Controls</div>
-      <div class="item">ThreeViewport</div>
-      <div class="section-title" style="margin-top:18px">Materials</div>
-      <div class="item">Button</div>
-      <div class="item">Panel</div>
-      <div class="item">Three Bridge</div>
+      <div class="section-title">Low-code Pages</div>
+      <div class="item active" data-nav="overview">设备总览</div>
+      <div class="item" data-nav="pump-detail">Pump P-101</div>
+      <div class="item" data-nav="tank-detail">Tank T-202</div>
+      <div class="item" data-nav="valve-detail">Valve V-303</div>
+      <div class="item" data-nav="loop-detail">Loop L-404</div>
+      <div class="section-title" style="margin-top:18px">Runtime</div>
+      <div class="item">ThreeViewport Proxy</div>
+      <div class="item">ThreeBridge</div>
+      <div class="item">Scene Bindings</div>
     </aside>
 
     <main class="canvas-wrap">
-      <section class="page">
-        <h2>设备监控 Demo</h2>
-        <p class="subtitle">这里模拟低代码页面。按钮通过 AppShell 的 ThreeBridge 控制右侧真实 Three.js iframe；这个 Canvas 自身可以被 reload。</p>
-        <div class="grid">
-          <article class="card">
-            <h3>低代码 → Three.js</h3>
-            <p>语义命令通过 MessageChannel 发送，不直接耦合 Three 内部对象。</p>
-            <div class="row">
-              <button id="highlight">高亮立方体</button>
-              <button id="spin">切换旋转</button>
-              <button id="camera">切换视角</button>
-              <button id="color">随机颜色</button>
-            </div>
-          </article>
-
-          <article class="card">
-            <h3>Three.js → 低代码</h3>
-            <p>直接点击右侧 3D 对象。Raycaster 选中后会把 object.click 事件送回这里。</p>
-            <div class="event-box" id="event-box">等待 Three.js 事件…</div>
-          </article>
-
-          <article class="card wide">
-            <h3>3D 视口尺寸</h3>
-            <p>改变 AppShell 中 persistent iframe 所在面板的宽度，不重建 WebGL Runtime。</p>
-            <label>Three pane width: <b id="width-value">52%</b></label>
-            <input id="width" type="range" min="40" max="66" value="52" />
-          </article>
-
-          <article class="card wide">
-            <h3>生命周期证明</h3>
-            <p>点击下面按钮会真正 reload 当前低代码 Canvas iframe。刷新后本页 bootId 会改变，而右侧 Three bootId 和 Three loads 应保持不变。</p>
-            <div class="row">
-              <button class="strong" id="reload">刷新低代码 Canvas（3D 不刷新）</button>
-              <button class="warn" id="request">重新读取 AppShell 状态</button>
-            </div>
-            <div class="status">
-              <div class="kv"><span>Canvas bootId</span><b id="canvas-boot">—</b></div>
-              <div class="kv"><span>Canvas loads</span><b id="canvas-loads">—</b></div>
-              <div class="kv"><span>Three bootId</span><b id="three-boot">—</b></div>
-              <div class="kv"><span>Three loads</span><b id="three-loads">—</b></div>
-            </div>
-          </article>
-        </div>
-      </section>
+      <section class="page" id="page-view"></section>
     </main>
 
     <aside class="props">
-      <div class="section-title">Properties</div>
-      <div class="prop-line"><label>componentName</label><div class="prop-box">ThreeViewport</div></div>
-      <div class="prop-line"><label>runtimeMode</label><div class="prop-box">persistent</div></div>
-      <div class="prop-line"><label>bridge</label><div class="prop-box">MessageChannel</div></div>
-      <div class="prop-line"><label>position</label><div class="prop-box">AppShell managed</div></div>
-      <div class="prop-line"><label>designMode</label><div class="prop-box">interactive demo</div></div>
+      <div class="section-title">Current Binding</div>
+      <div class="prop-line"><label>pageId</label><div class="prop-box" id="prop-page">overview</div></div>
+      <div class="prop-line"><label>deviceId</label><div class="prop-box" id="prop-device">—</div></div>
+      <div class="prop-line"><label>navigationSource</label><div class="prop-box" id="prop-source">canvas-mounted</div></div>
+      <div class="section-title" style="margin-top:20px">Architecture</div>
+      <div class="prop-line"><label>threeRuntime</label><div class="prop-box">persistent</div></div>
+      <div class="prop-line"><label>pageLifecycle</label><div class="prop-box">dynamic / replaceable</div></div>
+      <div class="prop-line"><label>bridge</label><div class="prop-box">MessageChannel + postMessage fallback</div></div>
     </aside>
   </div>
 
 <script>
 (() => {
-  const bootId = crypto.randomUUID();
-  const $ = (id) => document.getElementById(id);
-  $('canvas-boot').textContent = bootId.slice(0, 8);
+  const bootId=crypto.randomUUID();
+  const $=id=>document.getElementById(id);
+  const send=data=>parent.postMessage({source:'lowcode-canvas',...data},location.origin);
+  const command=(name,payload={})=>send({type:'three-command',name,payload});
 
-  const send = (data) => parent.postMessage({ source: 'lowcode-canvas', ...data }, location.origin);
-  const command = (name, payload = {}) => send({ type: 'three-command', name, payload });
-
-  $('highlight').onclick = () => command('object.highlight', { objectId: 'cube' });
-  $('spin').onclick = () => command('scene.toggleSpin');
-  $('camera').onclick = () => command('camera.toggleView');
-  $('color').onclick = () => command('object.randomColor', { objectId: 'cube' });
-  $('reload').onclick = () => send({ type: 'reload-canvas' });
-  $('request').onclick = () => send({ type: 'request-shell-state' });
-  $('width').oninput = (event) => {
-    const value = Number(event.target.value);
-    $('width-value').textContent = `${value}%`;
-    send({ type: 'resize-three', width: value });
+  const pageBindings={
+    'pump-detail':{pageId:'pump-detail',deviceId:'pump_001',deviceName:'Pump P-101',deviceType:'离心泵',metrics:[['转速','1480 rpm'],['出口压力','0.82 MPa'],['振动','2.1 mm/s']]},
+    'tank-detail':{pageId:'tank-detail',deviceId:'tank_002',deviceName:'Tank T-202',deviceType:'储罐',metrics:[['液位','68.4 %'],['温度','42.8 °C'],['压力','0.11 MPa']]},
+    'valve-detail':{pageId:'valve-detail',deviceId:'valve_003',deviceName:'Valve V-303',deviceType:'控制阀',metrics:[['开度','73 %'],['上游压力','0.76 MPa'],['状态','AUTO']]},
+    'loop-detail':{pageId:'loop-detail',deviceId:'loop_004',deviceName:'Loop L-404',deviceType:'工艺回路',metrics:[['流量','126 m³/h'],['温差','8.2 °C'],['控制模式','CASCADE']]}
   };
 
-  window.addEventListener('message', (event) => {
-    if (event.origin !== location.origin || event.data?.source !== 'app-shell') return;
-    const data = event.data;
-    if (data.type === 'three-event') {
-      const msg = data.event || {};
-      const payload = msg.payload ? JSON.stringify(msg.payload) : '{}';
-      $('event-box').textContent = `${msg.name || 'event'}  ${payload}`;
+  let currentPage='overview';
+  let currentBinding=null;
+  let currentSource='canvas-mounted';
+  let shell={canvasLoads:0,threeLoads:0,bootId:'',bridgeReady:false,pageSwitches:0};
+  let lastEvent='等待 Three.js 事件…';
+
+  const shellStatus=()=>`
+    <div class="status">
+      <div class="kv"><span>Canvas bootId</span><b id="canvas-boot">${bootId.slice(0,8)}</b></div>
+      <div class="kv"><span>Canvas loads</span><b id="canvas-loads">${shell.canvasLoads ?? '—'}</b></div>
+      <div class="kv"><span>Three bootId</span><b id="three-boot">${shell.bootId ? String(shell.bootId).slice(0,8) : '—'}</b></div>
+      <div class="kv"><span>Three loads</span><b id="three-loads">${shell.threeLoads ?? '—'}</b></div>
+      <div class="kv"><span>Page switches</span><b id="switch-count">${shell.pageSwitches ?? 0}</b></div>
+      <div class="kv"><span>Bridge</span><b id="bridge-ready">${shell.bridgeReady ? 'ready' : 'connecting'}</b></div>
+    </div>`;
+
+  const lifecycleCard=()=>`
+    <article class="card wide">
+      <h3>生命周期证明</h3>
+      <p>切换 Low-code page 只替换低代码内容，不 reload Canvas，更不会重建 Three Runtime。下面也可以主动 reload Canvas 验证 3D 仍保持。</p>
+      <div class="row">
+        <button class="strong" data-action="reload">Reload Low-code Canvas（3D 不刷新）</button>
+        <button class="warn" data-action="request-state">重新读取 AppShell 状态</button>
+      </div>
+      ${shellStatus()}
+    </article>`;
+
+  const renderOverview=()=>`
+    <div class="page-head">
+      <div><h2 id="page-title">设备总览</h2><p class="subtitle">这是 Low-code Page A。请直接点击右侧 3D 里的设备，AppShell 会根据 objectId 自动切换到对应的详情页面，而 Three.js iframe 不会 reload。</p></div>
+      <div class="page-badge">Page A · overview</div>
+    </div>
+    <div class="grid">
+      <article class="card wide">
+        <h3>3D 模型 → Low-code 页面映射</h3>
+        <p>映射属于 AppShell 配置，不写死在 Three.js 中。实际项目可以来自后端、DSL 或 TinyEngine 页面配置。</p>
+        <div class="device-list">
+          <div class="device"><b>蓝色方块 · Pump P-101</b><span><code>pump_001</code> → <code>pump-detail</code></span></div>
+          <div class="device"><b>橙色球体 · Tank T-202</b><span><code>tank_002</code> → <code>tank-detail</code></span></div>
+          <div class="device"><b>紫色柱体 · Valve V-303</b><span><code>valve_003</code> → <code>valve-detail</code></span></div>
+          <div class="device"><b>绿色环体 · Loop L-404</b><span><code>loop_004</code> → <code>loop-detail</code></span></div>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Low-code → Three.js</h3>
+        <p>总览页也可以主动发语义命令，不直接访问 Three 内部对象。</p>
+        <div class="row">
+          <button data-action="highlight-pump">高亮 Pump</button>
+          <button data-action="focus-pump">聚焦 Pump</button>
+          <button data-action="toggle-spin">切换旋转</button>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Three.js → Low-code</h3>
+        <p>最后收到的 Three 事件：</p>
+        <div class="event-box" id="event-box">${lastEvent}</div>
+      </article>
+      <article class="card wide">
+        <h3>3D 视口尺寸</h3>
+        <p>只改变 AppShell 中 persistent iframe 的布局尺寸，不改变 iframe src，不重建 WebGL Context。</p>
+        <label>Three pane width: <b id="width-value">52%</b></label>
+        <input id="width" type="range" min="40" max="66" value="52" />
+      </article>
+      ${lifecycleCard()}
+    </div>`;
+
+  const renderDetail=binding=>`
+    <div class="page-head">
+      <div><h2 id="page-title">${binding.deviceName} · 设备详情</h2><p class="subtitle">这是由 3D 对象 <code>${binding.deviceId}</code> 触发切换的 Low-code 详情页。当前 Canvas 与 Three Runtime 都没有因为页面切换而重启。</p></div>
+      <div class="page-badge">${binding.pageId}</div>
+    </div>
+    <div class="grid">
+      <article class="card wide">
+        <h3>${binding.deviceType}实时参数</h3>
+        <div class="metric-grid">${binding.metrics.map(([name,value])=>`<div class="metric"><span>${name}</span><b>${value}</b></div>`).join('')}</div>
+      </article>
+      <article class="card">
+        <h3>当前设备 → Three.js</h3>
+        <p>这些按钮使用当前页面的 <code>deviceId</code> 发命令，证明页面切换后反向控制仍可继续。</p>
+        <div class="row">
+          <button id="detail-highlight" data-action="highlight-current">高亮当前设备</button>
+          <button id="detail-camera" data-action="focus-current">镜头聚焦</button>
+          <button data-action="color-current">随机颜色</button>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Three.js → 当前页面</h3>
+        <p>最后收到的 Three 事件：</p>
+        <div class="event-box" id="event-box">${lastEvent}</div>
+      </article>
+      <article class="card wide">
+        <h3>Low-code Navigation</h3>
+        <p>返回总览只切换低代码页面状态；外层 AppShell 和 Persistent Three Runtime 都继续存在。</p>
+        <div class="row"><button id="back-overview" data-action="back-overview">← 返回设备总览</button></div>
+      </article>
+      ${lifecycleCard()}
+    </div>`;
+
+  const render=()=>{
+    const view=$('page-view');
+    $('current-page').textContent=currentPage;
+    document.querySelectorAll('[data-nav]').forEach(el=>el.classList.toggle('active',el.dataset.nav===currentPage));
+    $('prop-page').textContent=currentPage;
+    $('prop-device').textContent=currentBinding?.deviceId||'—';
+    $('prop-source').textContent=currentSource;
+    view.innerHTML=currentPage==='overview'?renderOverview():renderDetail(currentBinding||pageBindings[currentPage]);
+  };
+
+  const navigate=(pageId,params=null,source='app-shell')=>{
+    currentPage=pageId||'overview';
+    currentBinding=currentPage==='overview'?null:(params||pageBindings[currentPage]);
+    currentSource=source;
+    render();
+  };
+
+  document.addEventListener('click',event=>{
+    const nav=event.target.closest('[data-nav]');
+    if(nav){
+      const pageId=nav.dataset.nav;
+      const params=pageId==='overview'?null:pageBindings[pageId];
+      send({type:'lowcode-navigation-request',pageId,params});
+      return;
     }
-    if (data.type === 'shell-state') {
-      const shell = data.state || {};
-      if (shell.canvasLoads != null) $('canvas-loads').textContent = String(shell.canvasLoads);
-      if (shell.threeLoads != null) $('three-loads').textContent = String(shell.threeLoads);
-      if (shell.bootId) $('three-boot').textContent = String(shell.bootId).slice(0, 8);
+    const button=event.target.closest('[data-action]');
+    if(!button)return;
+    const action=button.dataset.action;
+    if(action==='highlight-pump') command('object.highlight',{objectId:'pump_001'});
+    if(action==='focus-pump') command('camera.focusObject',{objectId:'pump_001'});
+    if(action==='toggle-spin') command('scene.toggleSpin');
+    if(action==='highlight-current'&&currentBinding) command('object.highlight',{objectId:currentBinding.deviceId});
+    if(action==='focus-current'&&currentBinding) command('camera.focusObject',{objectId:currentBinding.deviceId});
+    if(action==='color-current'&&currentBinding) command('object.randomColor',{objectId:currentBinding.deviceId});
+    if(action==='back-overview') send({type:'lowcode-navigation-request',pageId:'overview',params:null});
+    if(action==='reload') send({type:'reload-canvas'});
+    if(action==='request-state') send({type:'request-shell-state'});
+  });
+
+  document.addEventListener('input',event=>{
+    if(event.target?.id!=='width')return;
+    const value=Number(event.target.value);
+    const valueEl=$('width-value');
+    if(valueEl)valueEl.textContent=`${value}%`;
+    send({type:'resize-three',width:value});
+  });
+
+  window.addEventListener('message',event=>{
+    if(event.origin!==location.origin||event.data?.source!=='app-shell')return;
+    const data=event.data;
+    if(data.type==='navigate-page') navigate(data.pageId,data.params,data.source);
+    if(data.type==='three-event'){
+      const msg=data.event||{};
+      const payload=msg.payload?JSON.stringify(msg.payload):'{}';
+      lastEvent=`${msg.name||'event'}  ${payload}`;
+      const box=$('event-box');
+      if(box)box.textContent=lastEvent;
+    }
+    if(data.type==='shell-state'){
+      shell={...shell,...(data.state||{})};
+      if(shell.activePage&&shell.activePage!==currentPage) navigate(shell.activePage,shell.activeBinding,'shell-state');
+      else render();
     }
   });
 
-  send({ type: 'request-shell-state' });
+  render();
+  send({type:'request-shell-state'});
 })();
 </script>
 </body>
