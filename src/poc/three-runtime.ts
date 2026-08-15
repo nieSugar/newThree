@@ -40,6 +40,11 @@ scene.add(grid)
 const bootId = crypto.randomUUID()
 ;(window as Window & { __THREE_POC_BOOT_ID?: string }).__THREE_POC_BOOT_ID = bootId
 
+const params = new URLSearchParams(window.location.search)
+const explicitHostOrigin = params.get('hostOrigin')
+const referrerOrigin = document.referrer ? new URL(document.referrer).origin : null
+const allowedHostOrigin = explicitHostOrigin || referrerOrigin || window.location.origin
+
 let port: MessagePort | null = null
 let highlightUntil = 0
 
@@ -60,7 +65,7 @@ new ResizeObserver(resize).observe(root)
 resize()
 
 window.addEventListener('message', (event: MessageEvent) => {
-  if (event.origin !== window.location.origin || event.data?.type !== 'THREE_CONNECT') return
+  if (event.origin !== allowedHostOrigin || event.data?.type !== 'THREE_CONNECT') return
   const nextPort = event.ports[0]
   if (!nextPort) return
   port = nextPort
