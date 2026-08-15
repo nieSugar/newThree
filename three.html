@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Persistent Three Runtime</title>
   <style>
-    html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#060910; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    html,body { width:100%; height:100%; margin:0; overflow:hidden; background:#060910; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     canvas { display:block; width:100%; height:100%; }
     .hud { position:fixed; z-index:4; pointer-events:none; top:52px; left:12px; display:flex; flex-direction:column; gap:7px; }
-    .pill { width:max-content; max-width:calc(100vw - 24px); border:1px solid rgba(255,255,255,.1); background:rgba(7,10,18,.7); backdrop-filter:blur(10px); border-radius:9px; padding:7px 9px; color:#94a1b9; font-size:10px; box-shadow:0 10px 30px rgba(0,0,0,.2); }
+    .pill { width:max-content; max-width:calc(100vw - 24px); border:1px solid rgba(255,255,255,.1); background:rgba(7,10,18,.72); backdrop-filter:blur(10px); border-radius:9px; padding:7px 9px; color:#94a1b9; font-size:10px; box-shadow:0 10px 30px rgba(0,0,0,.2); }
     .pill b { color:#eaf0ff; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
     .ready { color:#77e9ad; }
+    .legend { position:fixed; z-index:4; pointer-events:none; top:52px; right:12px; width:172px; border:1px solid rgba(255,255,255,.09); background:rgba(7,10,18,.72); backdrop-filter:blur(10px); border-radius:10px; padding:9px; color:#8f9db7; font-size:9px; line-height:1.55; }
+    .legend b { color:#dce6f8; display:block; font-size:10px; margin-bottom:5px; }
+    .legend span { display:block; margin:3px 0; }
     .hint { position:fixed; right:12px; bottom:12px; z-index:4; border:1px solid rgba(255,255,255,.08); background:rgba(7,10,18,.66); color:#8390a8; padding:7px 9px; border-radius:9px; font-size:10px; pointer-events:none; }
   </style>
-  <script type="importmap">
-    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}
-  </script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 </head>
 <body>
   <div class="hud">
@@ -23,52 +24,157 @@
     <div class="pill">bootId <b id="boot">—</b></div>
     <div class="pill">Bridge <b id="bridge">waiting</b></div>
   </div>
-  <div class="hint">拖拽旋转 / 滚轮缩放 / 点击物体触发 object.click</div>
+  <div class="legend">
+    <b>点击设备切换 Low-code Page</b>
+    <span>蓝色方块 · Pump P-101</span>
+    <span>橙色球体 · Tank T-202</span>
+    <span>紫色柱体 · Valve V-303</span>
+    <span>绿色环体 · Loop L-404</span>
+  </div>
+  <div class="hint">拖拽旋转 / 滚轮缩放 / 点击设备 → Low-code 页面切换</div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const bootId=crypto.randomUUID();
 document.getElementById('boot').textContent=bootId.slice(0,8);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x070b13);scene.fog=new THREE.Fog(0x070b13,10,24);
-const camera=new THREE.PerspectiveCamera(48,1,.1,100);camera.position.set(5.2,3.9,6.2);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.appendChild(renderer.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,.8,0);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x070b13);
+scene.fog=new THREE.Fog(0x070b13,10,24);
+const camera=new THREE.PerspectiveCamera(48,1,.1,100);
+camera.position.set(5.2,3.9,6.2);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+document.body.appendChild(renderer.domElement);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.target.set(0,.8,0);
+
 scene.add(new THREE.HemisphereLight(0xaac8ff,0x182033,1.8));
 const key=new THREE.DirectionalLight(0xffffff,3.6);key.position.set(4,7,5);scene.add(key);
 const rim=new THREE.PointLight(0x567cff,42,16,2);rim.position.set(-4,3,-4);scene.add(rim);
 const ground=new THREE.Mesh(new THREE.CircleGeometry(7,72),new THREE.MeshStandardMaterial({color:0x101725,roughness:.92,metalness:.06}));ground.rotation.x=-Math.PI/2;ground.position.y=-.02;scene.add(ground);
 const grid=new THREE.GridHelper(12,24,0x33425f,0x182238);grid.material.opacity=.42;grid.material.transparent=true;scene.add(grid);
-const cubeMat=new THREE.MeshStandardMaterial({color:0x4f82ff,roughness:.28,metalness:.2,emissive:0x102a66,emissiveIntensity:.5});
-const cube=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5),cubeMat);cube.position.set(0,.86,0);cube.userData.objectId='cube';scene.add(cube);
-const ring=new THREE.Mesh(new THREE.TorusGeometry(1.5,.08,18,96),new THREE.MeshStandardMaterial({color:0x73e2b7,emissive:0x174d3c,emissiveIntensity:.75,metalness:.3,roughness:.25}));ring.rotation.x=Math.PI/2;ring.position.set(0,.78,0);ring.userData.objectId='ring';scene.add(ring);
-const sphere=new THREE.Mesh(new THREE.IcosahedronGeometry(.58,2),new THREE.MeshStandardMaterial({color:0xffb45d,roughness:.38,metalness:.1}));sphere.position.set(-2.4,.65,-1.1);sphere.userData.objectId='sphere';scene.add(sphere);
-const marker=new THREE.Mesh(new THREE.CylinderGeometry(.34,.48,1.25,24),new THREE.MeshStandardMaterial({color:0x8e72ff,roughness:.3,metalness:.22}));marker.position.set(2.5,.64,-.7);marker.userData.objectId='marker';scene.add(marker);
-const raycaster=new THREE.Raycaster();const pointer=new THREE.Vector2();const clickable=[cube,sphere,marker,ring];
-let port=null;let spin=true;let altView=false;let highlightUntil=0;
+
+const registerDevice=(mesh,objectId,deviceName)=>{
+  mesh.userData.objectId=objectId;
+  mesh.userData.deviceName=deviceName;
+  mesh.userData.baseScale=mesh.scale.clone();
+  mesh.userData.baseEmissive=mesh.material?.emissive?.getHex?.() ?? 0;
+  mesh.userData.baseEmissiveIntensity=mesh.material?.emissiveIntensity ?? 0;
+  scene.add(mesh);
+  return mesh;
+};
+
+const pump=registerDevice(
+  new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5),new THREE.MeshStandardMaterial({color:0x4f82ff,roughness:.28,metalness:.2,emissive:0x102a66,emissiveIntensity:.5})),
+  'pump_001','Pump P-101'
+);
+pump.position.set(0,.86,0);
+
+const loop=registerDevice(
+  new THREE.Mesh(new THREE.TorusGeometry(1.5,.08,18,96),new THREE.MeshStandardMaterial({color:0x73e2b7,emissive:0x174d3c,emissiveIntensity:.75,metalness:.3,roughness:.25})),
+  'loop_004','Loop L-404'
+);
+loop.rotation.x=Math.PI/2;loop.position.set(0,.78,0);
+
+const tank=registerDevice(
+  new THREE.Mesh(new THREE.IcosahedronGeometry(.58,2),new THREE.MeshStandardMaterial({color:0xffb45d,roughness:.38,metalness:.1,emissive:0x25160a,emissiveIntensity:.16})),
+  'tank_002','Tank T-202'
+);
+tank.position.set(-2.4,.65,-1.1);
+
+const valve=registerDevice(
+  new THREE.Mesh(new THREE.CylinderGeometry(.34,.48,1.25,24),new THREE.MeshStandardMaterial({color:0x8e72ff,roughness:.3,metalness:.22,emissive:0x170f35,emissiveIntensity:.22})),
+  'valve_003','Valve V-303'
+);
+valve.position.set(2.5,.64,-.7);
+
+const clickable=[pump,tank,valve,loop];
+const deviceMap=new Map(clickable.map(object=>[object.userData.objectId,object]));
+const raycaster=new THREE.Raycaster();
+const pointer=new THREE.Vector2();
+let port=null;
+let spin=true;
 
 const emit=(name,payload={})=>{
   const message={type:'event',name,payload,bootId};
   if(port) port.postMessage(message);
   else parent.postMessage({source:'three-runtime',type:'THREE_EVENT',event:message},location.origin);
 };
-const resize=()=>{const width=Math.max(1,innerWidth);const height=Math.max(1,innerHeight);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();};
+
+const deviceFor=id=>deviceMap.get(id)||pump;
+const flashObject=object=>{
+  const material=object.material;
+  object.scale.copy(object.userData.baseScale).multiplyScalar(1.18);
+  if(material?.emissive){material.emissive.setHex(0x3d78ff);material.emissiveIntensity=2.6;}
+  clearTimeout(object.userData.flashTimer);
+  object.userData.flashTimer=setTimeout(()=>{
+    object.scale.copy(object.userData.baseScale);
+    if(material?.emissive){material.emissive.setHex(object.userData.baseEmissive);material.emissiveIntensity=object.userData.baseEmissiveIntensity;}
+  },1100);
+};
+
+const resize=()=>{
+  const width=Math.max(1,innerWidth);const height=Math.max(1,innerHeight);
+  renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
+};
 addEventListener('resize',resize);resize();
-renderer.domElement.addEventListener('pointerdown',event=>{const rect=renderer.domElement.getBoundingClientRect();pointer.x=((event.clientX-rect.left)/rect.width)*2-1;pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(clickable,false)[0]?.object;if(!hit)return;emit('object.click',{objectId:hit.userData.objectId||'unknown'});});
+
+renderer.domElement.addEventListener('pointerdown',event=>{
+  const rect=renderer.domElement.getBoundingClientRect();
+  pointer.x=((event.clientX-rect.left)/rect.width)*2-1;
+  pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(pointer,camera);
+  const hit=raycaster.intersectObjects(clickable,false)[0]?.object;
+  if(!hit)return;
+  flashObject(hit);
+  emit('object.click',{objectId:hit.userData.objectId,deviceName:hit.userData.deviceName});
+});
 
 const handleCommand=message=>{
   if(!message||message.type!=='command')return;
-  const {name}=message;
-  if(name==='object.highlight'){highlightUntil=performance.now()+1100;cube.scale.setScalar(1.16);cubeMat.emissive.setHex(0x3d78ff);cubeMat.emissiveIntensity=2.8;emit('object.highlighted',{objectId:'cube'});return;}
-  if(name==='scene.toggleSpin'){spin=!spin;emit('scene.spinChanged',{spinning:spin});return;}
-  if(name==='camera.toggleView'){altView=!altView;camera.position.set(...(altView?[2.8,6.8,3.2]:[5.2,3.9,6.2]));controls.target.set(0,.8,0);controls.update();emit('camera.changed',{preset:altView?'top':'perspective'});return;}
-  if(name==='object.randomColor'){const color=new THREE.Color().setHSL(Math.random(),.72,.58);cubeMat.color.copy(color);emit('object.colorChanged',{objectId:'cube',color:`#${color.getHexString()}`});}
+  const {name,payload={}}=message;
+  const object=deviceFor(payload.objectId);
+  if(name==='object.highlight'){
+    flashObject(object);
+    emit('object.highlighted',{objectId:object.userData.objectId,deviceName:object.userData.deviceName});
+    return;
+  }
+  if(name==='scene.toggleSpin'){
+    spin=!spin;
+    emit('scene.spinChanged',{spinning:spin});
+    return;
+  }
+  if(name==='camera.focusObject'){
+    const target=object.position.clone();
+    controls.target.copy(target);
+    camera.position.copy(target.clone().add(new THREE.Vector3(3.7,3.0,4.6)));
+    controls.update();
+    emit('camera.focused',{objectId:object.userData.objectId,deviceName:object.userData.deviceName});
+    return;
+  }
+  if(name==='camera.toggleView'){
+    camera.position.set(2.8,6.8,3.2);controls.target.set(0,.8,0);controls.update();
+    emit('camera.changed',{preset:'top'});
+    return;
+  }
+  if(name==='object.randomColor'){
+    const color=new THREE.Color().setHSL(Math.random(),.72,.58);
+    object.material.color.copy(color);
+    emit('object.colorChanged',{objectId:object.userData.objectId,color:`#${color.getHexString()}`});
+  }
 };
 
 addEventListener('message',event=>{
   if(event.origin!==location.origin)return;
   const data=event.data||{};
-  if(data.type==='THREE_CONNECT'&&event.ports?.[0]){
+  if(data.source==='app-shell'&&data.type==='THREE_CONNECT'&&event.ports?.[0]){
     port?.close?.();
     port=event.ports[0];
     port.onmessage=e=>handleCommand(e.data);
@@ -77,14 +183,18 @@ addEventListener('message',event=>{
     emit('ready',{bootId});
     return;
   }
-  if(data.source==='app-shell'&&data.type==='THREE_COMMAND'){
-    handleCommand(data.command);
-  }
+  if(data.source==='app-shell'&&data.type==='THREE_COMMAND') handleCommand(data.command);
 });
 
 parent.postMessage({source:'three-runtime',type:'THREE_READY',bootId},location.origin);
 const clock=new THREE.Clock();
-function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);if(spin){cube.rotation.y+=dt*.62;ring.rotation.z-=dt*.34;sphere.rotation.y-=dt*.38;}if(performance.now()>highlightUntil&&cube.scale.x>1.001){cube.scale.lerp(new THREE.Vector3(1,1,1),.09);cubeMat.emissive.lerp(new THREE.Color(0x102a66),.08);cubeMat.emissiveIntensity+=(.5-cubeMat.emissiveIntensity)*.08;}controls.update();renderer.render(scene,camera);}
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(clock.getDelta(),.05);
+  if(spin){pump.rotation.y+=dt*.62;loop.rotation.z-=dt*.34;tank.rotation.y-=dt*.38;valve.rotation.y+=dt*.2;}
+  controls.update();
+  renderer.render(scene,camera);
+}
 frame();
 </script>
 </body>
