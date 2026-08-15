@@ -13,7 +13,7 @@ export default {
     options: {
       relativeLayoutConfig: {
         [ThreePocToolbar.id]: {
-          insertAfter: META_APP.Refresh
+          insertAfter: META_APP.Media
         }
       }
     }
