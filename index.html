@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TinyEngine × Three.js Persistent Runtime Demo</title>
   <style>
-    :root { color-scheme: dark; --bg:#080b12; --panel:rgba(18,23,35,.86); --line:rgba(255,255,255,.09); --text:#eef2ff; --muted:#8f9bb3; --green:#5ee7a5; --amber:#ffc76b; --red:#ff7c88; --three-width:52%; }
+    :root { color-scheme:dark; --bg:#080b12; --panel:rgba(18,23,35,.86); --line:rgba(255,255,255,.09); --text:#eef2ff; --muted:#8f9bb3; --green:#5ee7a5; --amber:#ffc76b; --red:#ff7c88; --three-width:52%; }
     * { box-sizing:border-box; }
     html,body { width:100%; min-height:100%; margin:0; background:var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     body { min-height:100vh; background:radial-gradient(circle at 72% 0%,rgba(92,124,250,.16),transparent 36%),radial-gradient(circle at 12% 20%,rgba(94,231,165,.08),transparent 30%),#080b12; }
@@ -19,7 +19,6 @@
     .badge b { color:var(--text); font-weight:650; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
     .dot { width:7px; height:7px; border-radius:50%; background:var(--amber); box-shadow:0 0 12px currentColor; }
     .dot.ok { background:var(--green); }
-    .dot.fail { background:var(--red); }
     main { flex:1; min-height:0; padding:14px; display:grid; grid-template-columns:minmax(340px,calc(100% - var(--three-width) - 8px)) minmax(360px,var(--three-width)); gap:12px; }
     .pane { min-height:680px; border:1px solid var(--line); border-radius:18px; overflow:hidden; background:var(--panel); box-shadow:0 22px 60px rgba(0,0,0,.24); position:relative; }
     .pane-title { position:absolute; top:12px; left:12px; z-index:8; pointer-events:none; display:inline-flex; align-items:center; gap:8px; padding:7px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(7,10,18,.72); backdrop-filter:blur(10px); color:#c8d2e8; font-size:11px; }
@@ -37,9 +36,11 @@
 <body>
 <div class="shell">
   <header>
-    <div class="brand"><h1>TinyEngine × Three.js · Persistent Runtime Demo</h1><p>低代码 Canvas 可以刷新；Three.js iframe / WebGL Runtime 保持常驻并继续双向通信。</p></div>
+    <div class="brand"><h1>TinyEngine × Three.js · Persistent Runtime Demo</h1><p>点击 3D 设备会切换低代码页面；Low-code 页面/Canvas 变化时 Three.js WebGL Runtime 保持常驻。</p></div>
     <div class="badges">
       <div class="badge"><span id="bridge-dot" class="dot"></span>Bridge <b id="bridge-state">connecting</b></div>
+      <div class="badge">Low-code page <b id="active-page">overview</b></div>
+      <div class="badge">Page switches <b id="page-switches">0</b></div>
       <div class="badge">Canvas loads <b id="canvas-loads">0</b></div>
       <div class="badge">Three loads <b id="three-loads">0</b></div>
       <div class="badge">Three boot <b id="three-boot">—</b></div>
@@ -47,10 +48,10 @@
     </div>
   </header>
   <main>
-    <section class="pane"><div class="pane-title"><strong>Low-code Canvas</strong> · 可被单独 reload</div><iframe id="canvas-frame" src="./canvas.html?v=2" title="Low-code Canvas"></iframe></section>
-    <section class="pane" id="three-pane"><div class="pane-title"><strong>Persistent Three Runtime</strong> · 不属于 Canvas 生命周期</div><iframe id="three-frame" src="./three.html?v=2" title="Persistent Three.js Runtime" allow="fullscreen"></iframe></section>
+    <section class="pane"><div class="pane-title"><strong>Low-code Runtime</strong> · 页面可切换 / Canvas 可单独 reload</div><iframe id="canvas-frame" src="./canvas.html?v=3" title="Low-code Canvas"></iframe></section>
+    <section class="pane" id="three-pane"><div class="pane-title"><strong>Persistent Three Runtime</strong> · 不属于低代码页面生命周期</div><iframe id="three-frame" src="./three.html?v=3" title="Persistent Three.js Runtime" allow="fullscreen"></iframe></section>
   </main>
-  <div class="footer-note"><span>核心结构：<code>AppShell → Persistent Three iframe + Low-code Canvas iframe</code></span><span>说明：浏览器级 F5 会销毁整个 document；这里验证的是低代码页面/Canvas 刷新不重建 3D Runtime。</span></div>
+  <div class="footer-note"><span>核心结构：<code>AppShell → Persistent Three Runtime + Low-code Dynamic Pages</code></span><span>路由映射由 AppShell 的 <code>sceneBindings</code> 管理，Three.js 不依赖低代码页面 ID。</span></div>
 </div>
 <div id="toast" class="proof-toast"></div>
 <script>
@@ -59,17 +60,46 @@
   const threeFrame=document.getElementById('three-frame');
   const bridgeDot=document.getElementById('bridge-dot');
   const bridgeState=document.getElementById('bridge-state');
+  const activePageEl=document.getElementById('active-page');
+  const pageSwitchesEl=document.getElementById('page-switches');
   const canvasLoadsEl=document.getElementById('canvas-loads');
   const threeLoadsEl=document.getElementById('three-loads');
   const threeBootEl=document.getElementById('three-boot');
   const lastEventEl=document.getElementById('last-event');
   const toast=document.getElementById('toast');
-  const state={canvasLoads:0,threeLoads:0,bootId:'',port:null,bridgeReady:false,reloadProof:null,retryTimer:null};
+
+  const sceneBindings={
+    pump_001:{pageId:'pump-detail',deviceId:'pump_001',deviceName:'Pump P-101',deviceType:'离心泵'},
+    tank_002:{pageId:'tank-detail',deviceId:'tank_002',deviceName:'Tank T-202',deviceType:'储罐'},
+    valve_003:{pageId:'valve-detail',deviceId:'valve_003',deviceName:'Valve V-303',deviceType:'控制阀'},
+    loop_004:{pageId:'loop-detail',deviceId:'loop_004',deviceName:'Loop L-404',deviceType:'工艺回路'}
+  };
+
+  const state={canvasLoads:0,threeLoads:0,bootId:'',port:null,bridgeReady:false,reloadProof:null,retryTimer:null,activePage:'overview',activeBinding:null,pageSwitches:0};
   const short=v=>v?String(v).slice(0,8):'—';
-  const render=()=>{canvasLoadsEl.textContent=String(state.canvasLoads);threeLoadsEl.textContent=String(state.threeLoads);threeBootEl.textContent=short(state.bootId);bridgeState.textContent=state.bridgeReady?'ready':(state.port?'handshaking':'connecting');bridgeDot.className=`dot ${state.bridgeReady?'ok':''}`;};
+  const render=()=>{
+    canvasLoadsEl.textContent=String(state.canvasLoads);
+    threeLoadsEl.textContent=String(state.threeLoads);
+    threeBootEl.textContent=short(state.bootId);
+    activePageEl.textContent=state.activePage;
+    pageSwitchesEl.textContent=String(state.pageSwitches);
+    bridgeState.textContent=state.bridgeReady?'ready':(state.port?'handshaking':'connecting');
+    bridgeDot.className=`dot ${state.bridgeReady?'ok':''}`;
+  };
   const showToast=(message,ok=true)=>{toast.textContent=message;toast.className=`proof-toast ${ok?'':'fail'} show`;clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>{toast.className='proof-toast'},4200);};
   const sendCanvas=message=>canvasFrame.contentWindow?.postMessage({source:'app-shell',...message},location.origin);
-  const pushShellState=()=>sendCanvas({type:'shell-state',state:{canvasLoads:state.canvasLoads,threeLoads:state.threeLoads,bootId:state.bootId,bridgeReady:state.bridgeReady}});
+  const shellState=()=>({canvasLoads:state.canvasLoads,threeLoads:state.threeLoads,bootId:state.bootId,bridgeReady:state.bridgeReady,activePage:state.activePage,activeBinding:state.activeBinding,pageSwitches:state.pageSwitches});
+  const pushShellState=()=>sendCanvas({type:'shell-state',state:shellState()});
+
+  const navigateLowcode=(pageId,binding=null,source='app-shell')=>{
+    const nextPage=pageId||'overview';
+    if(nextPage!==state.activePage||JSON.stringify(binding)!==JSON.stringify(state.activeBinding)) state.pageSwitches+=1;
+    state.activePage=nextPage;
+    state.activeBinding=binding;
+    render();
+    sendCanvas({type:'navigate-page',pageId:nextPage,params:binding,source});
+    pushShellState();
+  };
 
   const handleThreeEvent=message=>{
     if(!message||message.type!=='event')return;
@@ -82,6 +112,14 @@
     }
     lastEventEl.textContent=message.name||'event';
     sendCanvas({type:'three-event',event:message});
+    if(message.name==='object.click'){
+      const objectId=message.payload?.objectId;
+      const binding=sceneBindings[objectId];
+      if(binding){
+        navigateLowcode(binding.pageId,binding,'three-object-click');
+        showToast(`3D → Low-code：${binding.deviceName} → ${binding.pageId}；Three Runtime 未重载。`);
+      }
+    }
   };
 
   const connectThree=()=>{
@@ -100,19 +138,25 @@
 
   const sendThreeCommand=(name,payload={})=>{
     const message={type:'command',name,payload};
-    if(state.bridgeReady&&state.port){ state.port.postMessage(message); }
+    if(state.bridgeReady&&state.port) state.port.postMessage(message);
     else { threeFrame.contentWindow?.postMessage({source:'app-shell',type:'THREE_COMMAND',command:message},location.origin); connectThree(); }
   };
 
   const reloadCanvasOnly=()=>{
-    state.reloadProof={bootId:state.bootId,threeLoads:state.threeLoads,canvasLoads:state.canvasLoads};
-    sendCanvas({type:'before-reload'});
+    state.reloadProof={bootId:state.bootId,threeLoads:state.threeLoads,canvasLoads:state.canvasLoads,activePage:state.activePage};
     setTimeout(()=>canvasFrame.contentWindow?.location.reload(),60);
   };
 
   canvasFrame.addEventListener('load',()=>{
-    state.canvasLoads+=1;render();
-    if(state.reloadProof){const proof=state.reloadProof;const ok=proof.bootId===state.bootId&&proof.threeLoads===state.threeLoads&&state.canvasLoads>proof.canvasLoads;showToast(ok?`PASS：Canvas 已重新加载；Three boot=${short(state.bootId)}，Three loads=${state.threeLoads} 均保持不变。`:'FAIL：Three Runtime 发生了意外重载。',ok);state.reloadProof=null;}
+    state.canvasLoads+=1;
+    render();
+    if(state.reloadProof){
+      const proof=state.reloadProof;
+      const ok=proof.bootId===state.bootId&&proof.threeLoads===state.threeLoads&&state.canvasLoads>proof.canvasLoads;
+      showToast(ok?`PASS：Low-code Canvas 已 reload；Three boot=${short(state.bootId)} / loads=${state.threeLoads} 均未变化。`:'FAIL：Three Runtime 发生了意外重载。',ok);
+      state.reloadProof=null;
+    }
+    sendCanvas({type:'navigate-page',pageId:state.activePage,params:state.activeBinding,source:'canvas-mounted'});
     pushShellState();
   });
 
@@ -124,15 +168,19 @@
   window.addEventListener('message',event=>{
     if(event.origin!==location.origin)return;
     const data=event.data||{};
-    if(event.source===threeFrame.contentWindow&&data.source==='three-runtime'&&data.type==='THREE_READY'){
-      state.bootId=data.bootId||state.bootId;
-      connectThree();
-      return;
+    if(event.source===threeFrame.contentWindow&&data.source==='three-runtime'){
+      if(data.type==='THREE_READY'){state.bootId=data.bootId||state.bootId;connectThree();return;}
+      if(data.type==='THREE_EVENT'){handleThreeEvent(data.event);return;}
     }
     if(event.source!==canvasFrame.contentWindow||data.source!=='lowcode-canvas')return;
     if(data.type==='three-command'){sendThreeCommand(data.name,data.payload||{});return;}
     if(data.type==='resize-three'){const width=Math.max(38,Math.min(68,Number(data.width)||52));document.documentElement.style.setProperty('--three-width',`${width}%`);return;}
     if(data.type==='reload-canvas'){reloadCanvasOnly();return;}
+    if(data.type==='lowcode-navigation-request'){
+      const binding=data.pageId==='overview'?null:(data.params||state.activeBinding);
+      navigateLowcode(data.pageId,binding,'lowcode-navigation');
+      return;
+    }
     if(data.type==='request-shell-state'){pushShellState();}
   });
 
