@@ -36,7 +36,7 @@
 <body>
 <div class="shell">
   <header>
-    <div class="brand"><h1>TinyEngine × Three.js · Persistent Runtime Demo</h1><p>点击 3D 设备会切换低代码页面；Low-code 页面/Canvas 变化时 Three.js WebGL Runtime 保持常驻。</p></div>
+    <div class="brand"><h1>TinyEngine × Three.js · Persistent Runtime Demo</h1><p>点击 3D 设备会切换低代码页面并同步浏览器 URL；前进/后退同样驱动 Low-code 页面，Three Runtime 保持常驻。</p></div>
     <div class="badges">
       <div class="badge"><span id="bridge-dot" class="dot"></span>Bridge <b id="bridge-state">connecting</b></div>
       <div class="badge">Low-code page <b id="active-page">overview</b></div>
@@ -48,10 +48,10 @@
     </div>
   </header>
   <main>
-    <section class="pane"><div class="pane-title"><strong>Low-code Runtime</strong> · 页面可切换 / Canvas 可单独 reload</div><iframe id="canvas-frame" src="./canvas.html?v=3" title="Low-code Canvas"></iframe></section>
+    <section class="pane"><div class="pane-title"><strong>Low-code Runtime</strong> · 页面路由同步 URL / Canvas 可单独 reload</div><iframe id="canvas-frame" src="./canvas.html?v=4" title="Low-code Canvas"></iframe></section>
     <section class="pane" id="three-pane"><div class="pane-title"><strong>Persistent Three Runtime</strong> · 不属于低代码页面生命周期</div><iframe id="three-frame" src="./three.html?v=3" title="Persistent Three.js Runtime" allow="fullscreen"></iframe></section>
   </main>
-  <div class="footer-note"><span>核心结构：<code>AppShell → Persistent Three Runtime + Low-code Dynamic Pages</code></span><span>路由映射由 AppShell 的 <code>sceneBindings</code> 管理，Three.js 不依赖低代码页面 ID。</span></div>
+  <div class="footer-note"><span>核心结构：<code>Browser History ↔ AppShell Router ↔ Low-code Dynamic Pages</code> + Persistent Three Runtime</span><span>GitHub Pages 使用 <code>?page=...&device=...</code>，直接刷新不会产生 SPA 404。</span></div>
 </div>
 <div id="toast" class="proof-toast"></div>
 <script>
@@ -74,8 +74,21 @@
     valve_003:{pageId:'valve-detail',deviceId:'valve_003',deviceName:'Valve V-303',deviceType:'控制阀'},
     loop_004:{pageId:'loop-detail',deviceId:'loop_004',deviceName:'Loop L-404',deviceType:'工艺回路'}
   };
+  const validPages=new Set(['overview',...Object.values(sceneBindings).map(binding=>binding.pageId)]);
 
-  const state={canvasLoads:0,threeLoads:0,bootId:'',port:null,bridgeReady:false,reloadProof:null,retryTimer:null,activePage:'overview',activeBinding:null,pageSwitches:0};
+  const routeFromUrl=()=>{
+    const params=new URLSearchParams(location.search);
+    const requestedPage=params.get('page')||'overview';
+    const pageId=validPages.has(requestedPage)?requestedPage:'overview';
+    if(pageId==='overview') return {pageId:'overview',binding:null};
+    const requestedDevice=params.get('device');
+    const exact=requestedDevice?sceneBindings[requestedDevice]:null;
+    const binding=(exact&&exact.pageId===pageId)?exact:Object.values(sceneBindings).find(item=>item.pageId===pageId)||null;
+    return binding?{pageId,binding}:{pageId:'overview',binding:null};
+  };
+
+  const initialRoute=routeFromUrl();
+  const state={canvasLoads:0,threeLoads:0,bootId:'',port:null,bridgeReady:false,reloadProof:null,retryTimer:null,activePage:initialRoute.pageId,activeBinding:initialRoute.binding,pageSwitches:0};
   const short=v=>v?String(v).slice(0,8):'—';
   const render=()=>{
     canvasLoadsEl.textContent=String(state.canvasLoads);
@@ -85,21 +98,48 @@
     pageSwitchesEl.textContent=String(state.pageSwitches);
     bridgeState.textContent=state.bridgeReady?'ready':(state.port?'handshaking':'connecting');
     bridgeDot.className=`dot ${state.bridgeReady?'ok':''}`;
+    const label=state.activeBinding?.deviceName||'设备总览';
+    document.title=`${label} · TinyEngine × Three.js Demo`;
   };
   const showToast=(message,ok=true)=>{toast.textContent=message;toast.className=`proof-toast ${ok?'':'fail'} show`;clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>{toast.className='proof-toast'},4200);};
   const sendCanvas=message=>canvasFrame.contentWindow?.postMessage({source:'app-shell',...message},location.origin);
   const shellState=()=>({canvasLoads:state.canvasLoads,threeLoads:state.threeLoads,bootId:state.bootId,bridgeReady:state.bridgeReady,activePage:state.activePage,activeBinding:state.activeBinding,pageSwitches:state.pageSwitches});
   const pushShellState=()=>sendCanvas({type:'shell-state',state:shellState()});
 
-  const navigateLowcode=(pageId,binding=null,source='app-shell')=>{
-    const nextPage=pageId||'overview';
-    if(nextPage!==state.activePage||JSON.stringify(binding)!==JSON.stringify(state.activeBinding)) state.pageSwitches+=1;
+  const syncUrl=(pageId,binding,mode='push')=>{
+    const url=new URL(location.href);
+    if(pageId==='overview'){
+      url.searchParams.delete('page');
+      url.searchParams.delete('device');
+    }else{
+      url.searchParams.set('page',pageId);
+      if(binding?.deviceId) url.searchParams.set('device',binding.deviceId);
+      else url.searchParams.delete('device');
+    }
+    const next=`${url.pathname}${url.search}${url.hash}`;
+    const current=`${location.pathname}${location.search}${location.hash}`;
+    if(next===current) return;
+    history[mode==='replace'?'replaceState':'pushState']({pageId,deviceId:binding?.deviceId||null},'',next);
+  };
+
+  const navigateLowcode=(pageId,binding=null,source='app-shell',options={})=>{
+    const nextPage=validPages.has(pageId)?pageId:'overview';
+    const nextBinding=nextPage==='overview'?null:binding;
+    const changed=nextPage!==state.activePage||JSON.stringify(nextBinding)!==JSON.stringify(state.activeBinding);
+    if(changed&&options.countSwitch!==false) state.pageSwitches+=1;
     state.activePage=nextPage;
-    state.activeBinding=binding;
+    state.activeBinding=nextBinding;
+    if(options.updateUrl!==false) syncUrl(nextPage,nextBinding,options.replaceUrl?'replace':'push');
     render();
-    sendCanvas({type:'navigate-page',pageId:nextPage,params:binding,source});
+    sendCanvas({type:'navigate-page',pageId:nextPage,params:nextBinding,source});
     pushShellState();
   };
+
+  const applyBrowserRoute=()=>{
+    const route=routeFromUrl();
+    navigateLowcode(route.pageId,route.binding,'browser-history',{updateUrl:false});
+  };
+  window.addEventListener('popstate',applyBrowserRoute);
 
   const handleThreeEvent=message=>{
     if(!message||message.type!=='event')return;
@@ -117,7 +157,7 @@
       const binding=sceneBindings[objectId];
       if(binding){
         navigateLowcode(binding.pageId,binding,'three-object-click');
-        showToast(`3D → Low-code：${binding.deviceName} → ${binding.pageId}；Three Runtime 未重载。`);
+        showToast(`3D → Low-code：${binding.deviceName} → ${binding.pageId}；URL 已同步，Three Runtime 未重载。`);
       }
     }
   };
@@ -153,7 +193,7 @@
     if(state.reloadProof){
       const proof=state.reloadProof;
       const ok=proof.bootId===state.bootId&&proof.threeLoads===state.threeLoads&&state.canvasLoads>proof.canvasLoads;
-      showToast(ok?`PASS：Low-code Canvas 已 reload；Three boot=${short(state.bootId)} / loads=${state.threeLoads} 均未变化。`:'FAIL：Three Runtime 发生了意外重载。',ok);
+      showToast(ok?`PASS：Low-code Canvas 已 reload；页面=${state.activePage}，Three boot=${short(state.bootId)} / loads=${state.threeLoads} 均未变化。`:'FAIL：Three Runtime 发生了意外重载。',ok);
       state.reloadProof=null;
     }
     sendCanvas({type:'navigate-page',pageId:state.activePage,params:state.activeBinding,source:'canvas-mounted'});
@@ -177,13 +217,14 @@
     if(data.type==='resize-three'){const width=Math.max(38,Math.min(68,Number(data.width)||52));document.documentElement.style.setProperty('--three-width',`${width}%`);return;}
     if(data.type==='reload-canvas'){reloadCanvasOnly();return;}
     if(data.type==='lowcode-navigation-request'){
-      const binding=data.pageId==='overview'?null:(data.params||state.activeBinding);
+      const binding=data.pageId==='overview'?null:(data.params||state.activeBinding||Object.values(sceneBindings).find(item=>item.pageId===data.pageId)||null);
       navigateLowcode(data.pageId,binding,'lowcode-navigation');
       return;
     }
     if(data.type==='request-shell-state'){pushShellState();}
   });
 
+  if(initialRoute.pageId!=='overview') syncUrl(initialRoute.pageId,initialRoute.binding,'replace');
   render();
   setTimeout(connectThree,1200);
 })();
