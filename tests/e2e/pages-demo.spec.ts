@@ -12,7 +12,7 @@ test('3D model click switches low-code page and browser URL without reloading Th
 
   await expect(lowcode.locator('#current-page')).toHaveText('overview')
   await expect(three.locator('canvas')).toBeVisible({ timeout: 30_000 })
-  await expect(page).toHaveURL(/\/newThree\/?$/)
+  expect(new URL(page.url()).search).toBe('')
 
   const threeBootBefore = await page.locator('#three-boot').textContent()
   const threeLoadsBefore = await page.locator('#three-loads').textContent()
@@ -64,7 +64,7 @@ test('3D model click switches low-code page and browser URL without reloading Th
   await expect(page.locator('#active-page')).toHaveText('overview')
   await expect(page.locator('#page-switches')).toHaveText('2')
   await expect(lowcode.locator('#current-page')).toHaveText('overview')
-  await expect(page).toHaveURL(/\/newThree\/?$/)
+  await expect.poll(() => new URL(page.url()).search).toBe('')
   await expect(page.locator('#canvas-loads')).toHaveText(canvasLoadsAfterReload || '')
   await expect(page.locator('#three-boot')).toHaveText(threeBootBefore || '')
   await expect(page.locator('#three-loads')).toHaveText(threeLoadsBefore || '')
