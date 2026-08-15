@@ -66,10 +66,17 @@ export default {
         window.__threePocBridge.toggleWide()
 
         const canvasFrame = document.querySelector('iframe#canvas')
-        const canvasDocument = useCanvas().canvasApi.value?.getDocument?.()
+        if (!canvasFrame) {
+          throw new Error('TinyEngine canvas iframe is not ready')
+        }
 
-        if (!canvasFrame || !canvasDocument) {
-          throw new Error('TinyEngine canvas is not ready')
+        // TinyEngine's built-in Refresh toolbar calls canvasApi.getDocument().location.reload().
+        // In this independently packaged PoC, the meta-service API can become available a little
+        // later than the actual same-origin canvas iframe. Prefer the official API when available
+        // and fall back to the concrete iframe document; both reload the same TinyEngine canvas.
+        const canvasDocument = useCanvas().canvasApi.value?.getDocument?.() || canvasFrame.contentDocument
+        if (!canvasDocument) {
+          throw new Error('TinyEngine canvas document is not ready')
         }
 
         canvasFrame.addEventListener(
