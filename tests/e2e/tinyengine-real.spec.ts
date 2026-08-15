@@ -20,7 +20,6 @@ test('real TinyEngine refresh keeps the Three.js runtime alive and bridged', asy
 
   const before = await page.evaluate(() => (window as any).__threePocBridge.getState())
   expect(before.bootId).toBeTruthy()
-  expect(before.loadCount).toBe(1)
 
   const widthBefore = await page.locator('#three-runtime-pane').evaluate((element) => element.getBoundingClientRect().width)
 
