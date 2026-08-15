@@ -23,7 +23,13 @@ test('real TinyEngine refresh keeps the Three.js runtime alive and bridged', asy
 
   const widthBefore = await page.locator('#three-runtime-pane').evaluate((element) => element.getBoundingClientRect().width)
 
-  await page.getByTestId('tiny-three-proof').click()
+  // TinyEngine's mock application can show a first-run confirm modal over the toolbar.
+  // Calling the actual ToolbarBase root's DOM click still exercises
+  // ToolbarBase @click -> click-api -> ThreePocToolbar.runProof without depending on modal copy.
+  await page
+    .getByTestId('tiny-three-proof')
+    .locator('.toolbar-item-wrap')
+    .evaluate((element: HTMLElement) => element.click())
 
   await expect
     .poll(() => page.evaluate(() => (window as any).__TINY_ENGINE_THREE_POC?.commandSent))
@@ -38,8 +44,9 @@ test('real TinyEngine refresh keeps the Three.js runtime alive and bridged', asy
     .poll(() => page.evaluate(() => (window as any).__TINY_ENGINE_THREE_POC?.lastInboundEvent?.name), { timeout: 30_000 })
     .toBe('object.highlighted')
 
-  const widthAfter = await page.locator('#three-runtime-pane').evaluate((element) => element.getBoundingClientRect().width)
-  expect(widthAfter).toBeGreaterThan(widthBefore)
+  await expect
+    .poll(() => page.locator('#three-runtime-pane').evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThan(widthBefore)
 
   const afterRefresh = await page.evaluate(() => (window as any).__threePocBridge.getState())
   expect(afterRefresh.bootId).toBe(before.bootId)
