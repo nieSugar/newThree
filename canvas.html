@@ -79,9 +79,7 @@
       <div class="item">Scene Bindings</div>
     </aside>
 
-    <main class="canvas-wrap">
-      <section class="page" id="page-view"></section>
-    </main>
+    <main class="canvas-wrap"><section class="page" id="page-view"></section></main>
 
     <aside class="props">
       <div class="section-title">Current Binding</div>
@@ -115,95 +113,27 @@
   let shell={canvasLoads:0,threeLoads:0,bootId:'',bridgeReady:false,pageSwitches:0};
   let lastEvent='等待 Three.js 事件…';
 
-  const shellStatus=()=>`
-    <div class="status">
-      <div class="kv"><span>Canvas bootId</span><b id="canvas-boot">${bootId.slice(0,8)}</b></div>
-      <div class="kv"><span>Canvas loads</span><b id="canvas-loads">${shell.canvasLoads ?? '—'}</b></div>
-      <div class="kv"><span>Three bootId</span><b id="three-boot">${shell.bootId ? String(shell.bootId).slice(0,8) : '—'}</b></div>
-      <div class="kv"><span>Three loads</span><b id="three-loads">${shell.threeLoads ?? '—'}</b></div>
-      <div class="kv"><span>Page switches</span><b id="switch-count">${shell.pageSwitches ?? 0}</b></div>
-      <div class="kv"><span>Bridge</span><b id="bridge-ready">${shell.bridgeReady ? 'ready' : 'connecting'}</b></div>
-    </div>`;
+  const shellStatus=()=>`<div class="status"><div class="kv"><span>Canvas bootId</span><b id="canvas-boot">${bootId.slice(0,8)}</b></div><div class="kv"><span>Canvas loads</span><b id="canvas-loads">${shell.canvasLoads ?? '—'}</b></div><div class="kv"><span>Three bootId</span><b id="three-boot">${shell.bootId ? String(shell.bootId).slice(0,8) : '—'}</b></div><div class="kv"><span>Three loads</span><b id="three-loads">${shell.threeLoads ?? '—'}</b></div><div class="kv"><span>Page switches</span><b id="switch-count">${shell.pageSwitches ?? 0}</b></div><div class="kv"><span>Bridge</span><b id="bridge-ready">${shell.bridgeReady ? 'ready' : 'connecting'}</b></div></div>`;
 
-  const lifecycleCard=()=>`
-    <article class="card wide">
-      <h3>生命周期证明</h3>
-      <p>切换 Low-code page 只替换低代码内容，不 reload Canvas，更不会重建 Three Runtime。下面也可以主动 reload Canvas 验证 3D 仍保持。</p>
-      <div class="row">
-        <button class="strong" data-action="reload">Reload Low-code Canvas（3D 不刷新）</button>
-        <button class="warn" data-action="request-state">重新读取 AppShell 状态</button>
-      </div>
-      ${shellStatus()}
-    </article>`;
+  const lifecycleCard=()=>`<article class="card wide"><h3>生命周期证明</h3><p>切换 Low-code page 只替换低代码内容，不 reload Canvas，更不会重建 Three Runtime。下面也可以主动 reload Canvas 验证 3D 仍保持。</p><div class="row"><button class="strong" data-action="reload">Reload Low-code Canvas（3D 不刷新）</button><button class="warn" data-action="request-state">重新读取 AppShell 状态</button></div>${shellStatus()}</article>`;
 
   const renderOverview=()=>`
-    <div class="page-head">
-      <div><h2 id="page-title">设备总览</h2><p class="subtitle">这是 Low-code Page A。请直接点击右侧 3D 里的设备，AppShell 会根据 objectId 自动切换到对应的详情页面，而 Three.js iframe 不会 reload。</p></div>
-      <div class="page-badge">Page A · overview</div>
-    </div>
+    <div class="page-head"><div><h2 id="page-title">设备总览</h2><p class="subtitle">这是 Low-code Page A。请直接点击右侧 3D 里的设备，AppShell 会根据 objectId 自动切换到对应的详情页面，而 Three.js iframe 不会 reload。</p></div><div class="page-badge">Page A · overview</div></div>
     <div class="grid">
-      <article class="card wide">
-        <h3>3D 模型 → Low-code 页面映射</h3>
-        <p>映射属于 AppShell 配置，不写死在 Three.js 中。实际项目可以来自后端、DSL 或 TinyEngine 页面配置。</p>
-        <div class="device-list">
-          <div class="device"><b>蓝色方块 · Pump P-101</b><span><code>pump_001</code> → <code>pump-detail</code></span></div>
-          <div class="device"><b>橙色球体 · Tank T-202</b><span><code>tank_002</code> → <code>tank-detail</code></span></div>
-          <div class="device"><b>紫色柱体 · Valve V-303</b><span><code>valve_003</code> → <code>valve-detail</code></span></div>
-          <div class="device"><b>绿色环体 · Loop L-404</b><span><code>loop_004</code> → <code>loop-detail</code></span></div>
-        </div>
-      </article>
-      <article class="card">
-        <h3>Low-code → Three.js</h3>
-        <p>总览页也可以主动发语义命令，不直接访问 Three 内部对象。</p>
-        <div class="row">
-          <button data-action="highlight-pump">高亮 Pump</button>
-          <button data-action="focus-pump">聚焦 Pump</button>
-          <button data-action="toggle-spin">切换旋转</button>
-        </div>
-      </article>
-      <article class="card">
-        <h3>Three.js → Low-code</h3>
-        <p>最后收到的 Three 事件：</p>
-        <div class="event-box" id="event-box">${lastEvent}</div>
-      </article>
-      <article class="card wide">
-        <h3>3D 视口尺寸</h3>
-        <p>只改变 AppShell 中 persistent iframe 的布局尺寸，不改变 iframe src，不重建 WebGL Context。</p>
-        <label>Three pane width: <b id="width-value">52%</b></label>
-        <input id="width" type="range" min="40" max="66" value="52" />
-      </article>
+      <article class="card wide"><h3>3D 模型 → Low-code 页面映射</h3><p>映射属于 AppShell 配置，不写死在 Three.js 中。实际项目可以来自后端、DSL 或 TinyEngine 页面配置。</p><div class="device-list"><div class="device"><b>蓝色方块 · Pump P-101</b><span><code>pump_001</code> → <code>pump-detail</code></span></div><div class="device"><b>橙色球体 · Tank T-202</b><span><code>tank_002</code> → <code>tank-detail</code></span></div><div class="device"><b>紫色柱体 · Valve V-303</b><span><code>valve_003</code> → <code>valve-detail</code></span></div><div class="device"><b>绿色环体 · Loop L-404</b><span><code>loop_004</code> → <code>loop-detail</code></span></div></div></article>
+      <article class="card"><h3>Low-code → Three.js</h3><p>总览页也可以主动发语义命令，不直接访问 Three 内部对象。</p><div class="row"><button data-action="highlight-pump">高亮 Pump</button><button data-action="focus-pump">聚焦 Pump</button><button data-action="toggle-spin">切换旋转</button></div></article>
+      <article class="card"><h3>Three.js → Low-code</h3><p>最后收到的 Three 事件：</p><div class="event-box" id="event-box">${lastEvent}</div></article>
+      <article class="card wide"><h3>3D 视口尺寸</h3><p>只改变 AppShell 中 persistent iframe 的布局尺寸，不改变 iframe src，不重建 WebGL Context。</p><label>Three pane width: <b id="width-value">52%</b></label><input id="width" type="range" min="40" max="66" value="52" /></article>
       ${lifecycleCard()}
     </div>`;
 
   const renderDetail=binding=>`
-    <div class="page-head">
-      <div><h2 id="page-title">${binding.deviceName} · 设备详情</h2><p class="subtitle">这是由 3D 对象 <code>${binding.deviceId}</code> 触发切换的 Low-code 详情页。当前 Canvas 与 Three Runtime 都没有因为页面切换而重启。</p></div>
-      <div class="page-badge">${binding.pageId}</div>
-    </div>
+    <div class="page-head"><div><h2 id="page-title">${binding.deviceName} · 设备详情</h2><p class="subtitle">这是由 3D 对象 <code>${binding.deviceId}</code> 触发切换的 Low-code 详情页。当前 Canvas 与 Three Runtime 都没有因为页面切换而重启。</p></div><div class="page-badge">${binding.pageId}</div></div>
     <div class="grid">
-      <article class="card wide">
-        <h3>${binding.deviceType}实时参数</h3>
-        <div class="metric-grid">${binding.metrics.map(([name,value])=>`<div class="metric"><span>${name}</span><b>${value}</b></div>`).join('')}</div>
-      </article>
-      <article class="card">
-        <h3>当前设备 → Three.js</h3>
-        <p>这些按钮使用当前页面的 <code>deviceId</code> 发命令，证明页面切换后反向控制仍可继续。</p>
-        <div class="row">
-          <button id="detail-highlight" data-action="highlight-current">高亮当前设备</button>
-          <button id="detail-camera" data-action="focus-current">镜头聚焦</button>
-          <button data-action="color-current">随机颜色</button>
-        </div>
-      </article>
-      <article class="card">
-        <h3>Three.js → 当前页面</h3>
-        <p>最后收到的 Three 事件：</p>
-        <div class="event-box" id="event-box">${lastEvent}</div>
-      </article>
-      <article class="card wide">
-        <h3>Low-code Navigation</h3>
-        <p>返回总览只切换低代码页面状态；外层 AppShell 和 Persistent Three Runtime 都继续存在。</p>
-        <div class="row"><button id="back-overview" data-action="back-overview">← 返回设备总览</button></div>
-      </article>
+      <article class="card wide"><h3>${binding.deviceType}实时参数</h3><div class="metric-grid">${binding.metrics.map(([name,value])=>`<div class="metric"><span>${name}</span><b>${value}</b></div>`).join('')}</div></article>
+      <article class="card"><h3>当前设备 → Three.js</h3><p>这些按钮使用当前页面的 <code>deviceId</code> 发命令，证明页面切换后反向控制仍可继续。</p><div class="row"><button id="detail-highlight" data-action="highlight-current">高亮当前设备</button><button id="detail-camera" data-action="focus-current">镜头聚焦</button><button data-action="color-current">随机颜色</button></div></article>
+      <article class="card"><h3>Three.js → 当前页面</h3><p>最后收到的 Three 事件：</p><div class="event-box" id="event-box">${lastEvent}</div></article>
+      <article class="card wide"><h3>Low-code Navigation</h3><p>返回总览只切换低代码页面状态；外层 AppShell 和 Persistent Three Runtime 都继续存在。</p><div class="row"><button id="back-overview" data-action="back-overview">← 返回设备总览</button></div></article>
       ${lifecycleCard()}
     </div>`;
 
@@ -219,21 +149,16 @@
 
   const navigate=(pageId,params=null,source='app-shell')=>{
     currentPage=pageId||'overview';
-    currentBinding=currentPage==='overview'?null:(params||pageBindings[currentPage]);
+    const defaults=pageBindings[currentPage]||null;
+    currentBinding=currentPage==='overview'?null:{...(defaults||{}),...(params||{})};
     currentSource=source;
     render();
   };
 
   document.addEventListener('click',event=>{
     const nav=event.target.closest('[data-nav]');
-    if(nav){
-      const pageId=nav.dataset.nav;
-      const params=pageId==='overview'?null:pageBindings[pageId];
-      send({type:'lowcode-navigation-request',pageId,params});
-      return;
-    }
-    const button=event.target.closest('[data-action]');
-    if(!button)return;
+    if(nav){const pageId=nav.dataset.nav;const params=pageId==='overview'?null:pageBindings[pageId];send({type:'lowcode-navigation-request',pageId,params});return;}
+    const button=event.target.closest('[data-action]');if(!button)return;
     const action=button.dataset.action;
     if(action==='highlight-pump') command('object.highlight',{objectId:'pump_001'});
     if(action==='focus-pump') command('camera.focusObject',{objectId:'pump_001'});
@@ -246,30 +171,14 @@
     if(action==='request-state') send({type:'request-shell-state'});
   });
 
-  document.addEventListener('input',event=>{
-    if(event.target?.id!=='width')return;
-    const value=Number(event.target.value);
-    const valueEl=$('width-value');
-    if(valueEl)valueEl.textContent=`${value}%`;
-    send({type:'resize-three',width:value});
-  });
+  document.addEventListener('input',event=>{if(event.target?.id!=='width')return;const value=Number(event.target.value);const valueEl=$('width-value');if(valueEl)valueEl.textContent=`${value}%`;send({type:'resize-three',width:value});});
 
   window.addEventListener('message',event=>{
     if(event.origin!==location.origin||event.data?.source!=='app-shell')return;
     const data=event.data;
     if(data.type==='navigate-page') navigate(data.pageId,data.params,data.source);
-    if(data.type==='three-event'){
-      const msg=data.event||{};
-      const payload=msg.payload?JSON.stringify(msg.payload):'{}';
-      lastEvent=`${msg.name||'event'}  ${payload}`;
-      const box=$('event-box');
-      if(box)box.textContent=lastEvent;
-    }
-    if(data.type==='shell-state'){
-      shell={...shell,...(data.state||{})};
-      if(shell.activePage&&shell.activePage!==currentPage) navigate(shell.activePage,shell.activeBinding,'shell-state');
-      else render();
-    }
+    if(data.type==='three-event'){const msg=data.event||{};const payload=msg.payload?JSON.stringify(msg.payload):'{}';lastEvent=`${msg.name||'event'}  ${payload}`;const box=$('event-box');if(box)box.textContent=lastEvent;}
+    if(data.type==='shell-state'){shell={...shell,...(data.state||{})};if(shell.activePage&&shell.activePage!==currentPage) navigate(shell.activePage,shell.activeBinding,'shell-state');else render();}
   });
 
   render();
