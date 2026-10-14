@@ -1,0 +1,43 @@
+{
+  "assets": [
+    {
+      "id": "procedural-checker-texture",
+      "kind": "texture",
+      "source": "Generated in src/lessons/labScene.ts with CanvasTexture",
+      "license": "Project-owned procedural asset"
+    },
+    {
+      "id": "generated-gltf-practice-model",
+      "kind": "model",
+      "source": "Generated at runtime from primitive BufferGeometry and used to teach the GLTFLoader pipeline",
+      "license": "Project-owned procedural asset"
+    },
+    {
+      "id": "shader-gradient-field",
+      "kind": "shader",
+      "source": "Generated in src/lessons/labScene.ts with ShaderMaterial",
+      "license": "Project-owned procedural asset"
+    },
+    {
+      "id": "wiki-pbr-materials-cover",
+      "kind": "image",
+      "path": "/assets/wiki/pbr-materials.png",
+      "source": "Generated with built-in imagegen for the Wiki PBR article cover",
+      "license": "Project-owned generated asset"
+    },
+    {
+      "id": "wiki-shader-field-cover",
+      "kind": "image",
+      "path": "/assets/wiki/shader-field.png",
+      "source": "Generated with built-in imagegen for the Wiki Shader article cover",
+      "license": "Project-owned generated asset"
+    },
+    {
+      "id": "wiki-gpu-pipeline-cover",
+      "kind": "image",
+      "path": "/assets/wiki/gpu-pipeline.png",
+      "source": "Generated with built-in imagegen for the Wiki render pipeline and WebGPU article covers",
+      "license": "Project-owned generated asset"
+    }
+  ]
+}
