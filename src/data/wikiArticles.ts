@@ -150,7 +150,7 @@ const featuredArticleOverrides = {
     visuals: [
       {
         kind: 'image',
-        imageSrc: '/assets/wiki/pbr-materials.png',
+        imageSrc: `${import.meta.env.BASE_URL}assets/wiki/pbr-materials.png`,
         title: 'PBR 材质封面',
         alt: '不同粗糙度和金属度的材质球在暗色背景中展示反射差异。',
         caption: 'AI 生成封面用于建立材质氛围，具体参数关系仍靠程序化图解说明。'
@@ -270,7 +270,7 @@ const featuredArticleOverrides = {
     visuals: [
       {
         kind: 'image',
-        imageSrc: '/assets/wiki/shader-field.png',
+        imageSrc: `${import.meta.env.BASE_URL}assets/wiki/shader-field.png`,
         title: 'Shader 程序材质封面',
         alt: '发光噪声场、网格线和像素碎片构成的抽象 Shader 视觉。',
         caption: 'AI 生成封面用于表达程序材质的视觉方向，具体流程由 Shader Flow 图解释。'
@@ -319,7 +319,7 @@ const featuredArticleOverrides = {
     visuals: [
       {
         kind: 'image',
-        imageSrc: '/assets/wiki/gpu-pipeline.png',
+        imageSrc: `${import.meta.env.BASE_URL}assets/wiki/gpu-pipeline.png`,
         title: 'GPU 管线封面',
         alt: '几何体沿着发光 GPU 管线流动并生成最终画面。',
         caption: 'AI 生成封面表现现代 GPU 管线氛围，步骤关系由程序化流程图承担。'
@@ -452,7 +452,7 @@ const featuredArticleOverrides = {
     visuals: [
       {
         kind: 'image',
-        imageSrc: '/assets/wiki/gpu-pipeline.png',
+        imageSrc: `${import.meta.env.BASE_URL}assets/wiki/gpu-pipeline.png`,
         title: 'WebGPU 管线封面',
         alt: '现代 GPU 管线的抽象技术插图。',
         caption: 'WebGPU 能打开更现代的能力，但仍需要清晰的渲染管线和兼容策略。'

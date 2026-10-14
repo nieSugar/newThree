@@ -58,3 +58,11 @@ Vitest 覆盖课程注册、进度存储、术语搜索和练习判定。Playwri
 ## 资产策略
 
 当前版本只使用项目内自制几何、程序贴图和运行时生成的练习模型。资产来源与 license 记录在 `public/assets/manifest.json`，后续如加入外部 glTF / GLB，必须补充来源、授权、压缩方式和体积说明。
+
+## 静态部署
+
+运行 `npm run build:pages`，将生成的 `dist/` 内容发布到 GitHub Pages 的站点目录。构建使用相对资源路径，课程采用 hash 路由，可放在站点根目录或子目录；Wiki 图片也随构建路径加载。
+
+课程发布在 [`/newThree/course/`](https://niesugar.github.io/newThree/course/)，发布时保留 `gh-pages` 分支中的现有演示，仅更新 `course/` 目录。
+
+公开站点包含课程原创讲解与实验。PBRT 完整私人学习译稿保存在个人文档目录，不包含在构建产物中。
