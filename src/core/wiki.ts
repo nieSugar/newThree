@@ -39,6 +39,7 @@ function getWikiSearchText(article: WikiArticle): string {
     ...article.tags,
     ...article.relatedTermIds,
     ...article.relatedLessonIds,
+    ...(article.readings ?? []).map((reading) => reading.title),
     ...article.sections.flatMap((section) => [section.title, section.body, ...section.bullets]),
     ...article.mistakes,
     ...article.visuals.flatMap((visual) => [visual.title, visual.alt, visual.caption, visual.diagram ?? '', visual.imageSrc ?? ''])

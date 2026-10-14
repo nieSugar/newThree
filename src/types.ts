@@ -97,6 +97,11 @@ export interface WikiSection {
   bullets: string[];
 }
 
+export interface ReadingReference {
+  title: string;
+  url: string;
+}
+
 export interface WikiArticle {
   id: string;
   termId: string;
@@ -111,6 +116,7 @@ export interface WikiArticle {
   mistakes: string[];
   relatedTermIds: string[];
   relatedLessonIds: string[];
+  readings?: ReadingReference[];
   source: 'glossary' | 'featured';
 }
 
@@ -147,6 +153,7 @@ export interface LessonNarrative {
   mentalModel: string;
   keyPoints: string[];
   commonMistakes: string[];
+  readings?: ReadingReference[];
 }
 
 export interface LessonMetrics {

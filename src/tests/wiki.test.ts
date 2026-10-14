@@ -19,6 +19,12 @@ describe('wiki articles', () => {
     expect(searchWikiArticles(wikiArticles, 'PCFSoftShadowMap', WIKI_ALL_STAGE).some((article) => article.termId === 'shadow-map')).toBe(true);
   });
 
+  it('finds the new PBR explanations and their reading references', () => {
+    for (const query of ['Fresnel', '菲涅耳', '微表面', '能量守恒', 'PBRT 4 · 9.3']) {
+      expect(searchWikiArticles(wikiArticles, query).some((article) => article.termId === 'pbr'), query).toBe(true);
+    }
+  });
+
   it('keeps featured deep-dive articles visually and pedagogically complete', () => {
     expect(featuredWikiTermIds).toEqual([
       'scene',

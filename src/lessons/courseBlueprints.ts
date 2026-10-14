@@ -515,23 +515,33 @@ geometry.computeVertexNormals();`
       title: '04. 材质、PBR 与纹理',
       stage: '效果',
       difficulty: '进阶',
-      estimatedMinutes: 30,
-      summary: '用粗糙度、金属度、环境强度和程序贴图理解 PBR 材质调效果。',
-      tags: ['material', 'PBR', 'texture'],
+      estimatedMinutes: 40,
+      summary: '从微表面与菲涅耳效应理解 PBR，再用粗糙度、金属度和纹理验证材质变化。',
+      tags: ['material', 'PBR', 'texture', 'Fresnel', 'PBRT'],
       terms: ['pbr', 'roughness', 'metalness', 'texture', 'mipmap', 'color-space', 'environment-map']
     },
     narrative: {
-      overview: '材质不是“换个颜色”这么简单，真实感来自光照模型、贴图和环境反射的组合。',
-      mentalModel: 'roughness 控制反射糊不糊，metalness 控制像不像金属，envMap 决定反射里有什么。',
+      overview: 'PBR 材质描述光与表面的交互。先观察材质球的高光，再开启菲涅耳观察平面，对比正面与掠射角的反射；原理参考 PBRT 第四版，实验使用 Three.js 的实时近似。',
+      mentalModel: 'roughness 描述微表面朝向的分散程度，metalness 近似区分金属与非金属，环境贴图提供周围光照；菲涅耳效应让反射比例随角度变化。',
       keyPoints: [
         'MeshStandardMaterial 是最常用的 PBR 材质。',
+        '微表面模型用统计分布表示微观粗糙；roughness 改变高光分布，不会增加几何细分。',
+        'Fresnel（菲涅耳效应）描述角度相关的反射比例：许多非金属表面在掠射角下反射更强。',
+        'BRDF 是双向反射分布函数，BSDF 还包括透射；非发光表面的反射、透射与吸收需要满足能量守恒。',
         '颜色贴图通常用 sRGB，数据贴图通常保持 Linear。',
-        '金属材质非常依赖环境贴图。'
+        '金属主要表现为带颜色的镜面反射；环境贴图提供反射内容，但不会计算场景物体之间的多次反弹。'
       ],
       commonMistakes: [
         '金属度拉满但没有环境贴图，结果灰扑扑。',
         '把 roughness 和 metalness 当亮度调节。',
-        '没有设置 texture colorSpace 导致颜色发灰。'
+        '没有设置 texture colorSpace 导致颜色发灰。',
+        '用 Basic 或 Normal 材质观察菲涅耳效应；它们不使用这里的 PBR 反射模型。',
+        '只看屏幕亮度就判断能量是否守恒，忽略环境、曝光和色调映射。'
+      ],
+      readings: [
+        { title: 'PBRT 4 · 4.3 表面反射', url: 'https://www.pbr-book.org/4ed/Radiometry,_Spectra,_and_Color/Surface_Reflection' },
+        { title: 'PBRT 4 · 9.3 镜面反射与透射（含菲涅耳方程）', url: 'https://www.pbr-book.org/4ed/Reflection_Models/Specular_Reflection_and_Transmission' },
+        { title: 'PBRT 4 · 9.6 用微表面理论描述粗糙度', url: 'https://www.pbr-book.org/4ed/Reflection_Models/Roughness_Using_Microfacet_Theory' }
       ]
     },
     controls: [
@@ -540,7 +550,9 @@ geometry.computeVertexNormals();`
       range('roughness', '粗糙度', 0.35, 0, 1, 0.01, '越低越像镜面，越高越哑光。'),
       range('metalness', '金属度', 0.6, 0, 1, 0.01, '金属材质主要反射环境。'),
       range('envIntensity', '环境强度', 1, 0, 3, 0.05, '控制环境贴图对 PBR 的影响。'),
-      toggle('textureEnabled', '程序贴图', true, '打开 checker texture，观察 UV 映射。')
+      toggle('textureEnabled', '程序贴图', true, '打开 checker texture，观察 UV 映射。'),
+      toggle('fresnelDemo', '菲涅耳观察平面', false, '切换到平面，用 Standard 或 Physical 材质比较正面与掠射角的环境反射。'),
+      range('viewAngle', '观察夹角', 0, 0, 80, 1, '仅观察平面使用：0° 正对表面，接近 90° 时沿表面掠过。反射内容也会随角度变化。', '°')
     ],
     exercises: [
       {
@@ -559,6 +571,21 @@ geometry.computeVertexNormals();`
         goal: '打开程序贴图，观察球体表面贴图分布。',
         hint: 'checker 图案能快速暴露 UV 拉伸。',
         checks: [{ source: 'control', key: 'textureEnabled', op: 'truthy' }]
+      },
+      {
+        id: 'material-fresnel-observation',
+        title: '观察掠射角反射',
+        goal: '选择 Standard 或 Physical，开启观察平面，关闭程序贴图，把金属度设为 0、粗糙度降到 0.15 以下、环境强度设为 1 以上，再比较 0° 和 70° 以上的观察夹角。',
+        hint: '使用较暗的基础色更容易看清反射。观察的是角度相关的反射与环境内容，不是严格的反射率测量。',
+        checks: [
+          { source: 'flag', key: 'fresnelReady', op: 'truthy' },
+          { source: 'flag', key: 'observedFrontalView', op: 'truthy' },
+          { source: 'control', key: 'metalness', op: 'eq', value: 0 },
+          { source: 'control', key: 'roughness', op: 'lte', value: 0.15 },
+          { source: 'control', key: 'textureEnabled', op: 'eq', value: false },
+          { source: 'control', key: 'envIntensity', op: 'gte', value: 1 },
+          { source: 'control', key: 'viewAngle', op: 'gte', value: 70 }
+        ]
       }
     ],
     source: `const texture = new THREE.CanvasTexture(canvas);
@@ -570,7 +597,11 @@ const material = new THREE.MeshPhysicalMaterial({
   metalness,
   envMapIntensity,
   map: texture
-});`
+});
+
+// 观察平面朝向相机，再改变法线与观察方向的夹角。
+panel.lookAt(camera.position);
+panel.rotateY(THREE.MathUtils.degToRad(viewAngle));`
   },
   {
     kind: 'lighting',
@@ -580,26 +611,37 @@ const material = new THREE.MeshPhysicalMaterial({
       title: '05. 灯光、阴影与空间层次',
       stage: '效果',
       difficulty: '进阶',
-      estimatedMinutes: 28,
-      summary: '用环境光、方向光、点光和 shadow map 理解立体感从哪来。',
-      tags: ['light', 'shadow', 'tone mapping'],
+      estimatedMinutes: 38,
+      summary: '区分直接光与间接光，通过主光和环境光照对照理解入射方向、反射与阴影。',
+      tags: ['light', 'shadow', 'tone mapping', 'radiometry', 'PBRT'],
       terms: ['light', 'shadow-map', 'tone-mapping', 'color-space']
     },
     narrative: {
-      overview: '灯光决定空间层次。材质再好，光打坏了也会像塑料。',
-      mentalModel: 'AmbientLight 给基础亮度，DirectionalLight 像太阳，PointLight 像灯泡，shadow map 负责接地感。',
+      overview: '灯光决定表面从哪些方向收到多少光，材质决定如何反射。固定材质与曝光，切换光照来源，再改变主光高度观察入射方向和阴影；原理参考 PBRT 第四版。',
+      mentalModel: '直接光从光源直接到达表面，间接光先经过其他表面反射。DirectionalLight、PointLight 和 Shadow Map 用于实时近似；AmbientLight 与环境贴图提供填充和环境光照。',
       keyPoints: [
+        'irradiance（辐照度）表示单位面积收到的光通量；radiance（辐亮度）描述沿某方向、单位投影面积和立体角的光通量。',
+        '正对光源的表面通常收到更多光；斜入射时单位面积收到的光减少。主光高度会改变本实验的光照方向。',
+        '理想点光的贡献随距离平方反比衰减；方向光不采用点光的距离衰减。',
+        '环境贴图经 PMREM 预过滤后近似环境光照；AmbientLight 不计算反弹路径，二者都不能替代完整的全局光照。',
         '阴影要同时开启 renderer.shadowMap、light.castShadow、mesh.castShadow / receiveShadow。',
-        '方向光的位置影响阴影方向。',
-        '阴影范围越大，固定分辨率下越容易糊。'
+        'Shadow Map 从光源视角记录深度，近似判断遮挡；范围越大，固定分辨率下越容易糊。'
       ],
       commonMistakes: [
         '只开 renderer.shadowMap，忘了 mesh.castShadow。',
         'AmbientLight 太高导致画面没有层次。',
-        '阴影锯齿时只调 mapSize，不调 light camera 范围。'
+        '阴影锯齿时只调 mapSize，不调 light camera 范围。',
+        '把环境贴图当成场景物体之间实时计算的间接光。',
+        '把曝光当作灯光能量；曝光改变显示结果，不会增加表面实际接收到的光。'
+      ],
+      readings: [
+        { title: 'PBRT 4 · 4.1 辐射度学', url: 'https://www.pbr-book.org/4ed/Radiometry,_Spectra,_and_Color/Radiometry' },
+        { title: 'PBRT 4 · 12.2 点光源', url: 'https://www.pbr-book.org/4ed/Light_Sources/Point_Lights' },
+        { title: 'PBRT 4 · 12.5 无限面积光源', url: 'https://www.pbr-book.org/4ed/Light_Sources/Infinite_Area_Lights' }
       ]
     },
     controls: [
+      select('lightingMode', '光照来源', 'mixed', '主光模式仅保留本课方向光；环境模式仅保留环境贴图，便于对照。', [['mixed', '组合光照'], ['key', '仅主光'], ['environment', '仅环境贴图']]),
       range('ambientIntensity', '环境光', 0.25, 0, 2, 0.01, '基础亮度，太高会压平层次。'),
       range('keyIntensity', '主光强度', 2.5, 0, 6, 0.05, '方向光强度，影响主体明暗和阴影。'),
       range('lightHeight', '主光高度', 5, 1, 9, 0.1, '改变阴影方向和长度。'),
@@ -614,7 +656,8 @@ const material = new THREE.MeshPhysicalMaterial({
         hint: '环境光太高，阴影和体积感会被洗掉。',
         checks: [
           { source: 'control', key: 'ambientIntensity', op: 'lte', value: 0.5 },
-          { source: 'control', key: 'shadowEnabled', op: 'truthy' }
+          { source: 'control', key: 'shadowEnabled', op: 'truthy' },
+          { source: 'flag', key: 'keyLightActive', op: 'truthy' }
         ]
       },
       {
@@ -622,7 +665,23 @@ const material = new THREE.MeshPhysicalMaterial({
         title: '调亮主光',
         goal: '把主光强度调到 3 以上，观察阴影边界和高光。',
         hint: '主光越强，明暗对比越明显。',
-        checks: [{ source: 'control', key: 'keyIntensity', op: 'gte', value: 3 }]
+        checks: [
+          { source: 'control', key: 'keyIntensity', op: 'gte', value: 3 },
+          { source: 'flag', key: 'keyLightActive', op: 'truthy' }
+        ]
+      },
+      {
+        id: 'lighting-isolate-key',
+        title: '隔离主光看入射方向',
+        goal: '先切到“仅环境贴图”观察反射，再切到“仅主光”，开启阴影，把主光强度设为 2 以上、高度降到 2 以下，观察明暗与阴影方向。',
+        hint: '仅主光模式会关闭点光、环境光和环境贴图；主光高度变化不会使用点光的距离平方衰减。',
+        checks: [
+          { source: 'flag', key: 'comparedLighting', op: 'truthy' },
+          { source: 'control', key: 'lightingMode', op: 'eq', value: 'key' },
+          { source: 'control', key: 'lightHeight', op: 'lte', value: 2 },
+          { source: 'control', key: 'keyIntensity', op: 'gte', value: 2 },
+          { source: 'control', key: 'shadowEnabled', op: 'truthy' }
+        ]
       }
     ],
     source: `renderer.shadowMap.enabled = true;
@@ -631,7 +690,13 @@ mesh.castShadow = true;
 floor.receiveShadow = true;
 
 const ambient = new THREE.AmbientLight(0xffffff, 0.25);
-const key = new THREE.DirectionalLight(0xffffff, 2.5);`
+const key = new THREE.DirectionalLight(0xffffff, 2.5);
+
+// 隔离直接主光时，关闭其他光照贡献。
+ambient.intensity = lightingMode === 'mixed' ? ambientIntensity : 0;
+point.intensity = lightingMode === 'mixed' ? 3 : 0;
+key.intensity = lightingMode === 'environment' ? 0 : keyIntensity;
+scene.environmentIntensity = lightingMode === 'key' ? 0 : 1;`
   },
   {
     kind: 'camera',

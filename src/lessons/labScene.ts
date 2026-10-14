@@ -76,9 +76,12 @@ export function createLabScene(options: LabSceneOptions, context: LessonContext)
   scene.environment = environment;
 
   const hemisphere = new THREE.HemisphereLight(0xd7ecff, 0x27313d, 1.2);
+  // 灯光课使用自己的光源，避免共享补光掩盖隔离实验。
+  hemisphere.visible = options.kind !== 'lighting';
   scene.add(hemisphere);
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 2);
+  keyLight.visible = options.kind !== 'lighting';
   keyLight.position.set(5, 7, 4);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
@@ -448,8 +451,10 @@ function buildGeometry({ root, accent, setFlag }: SceneServices, values: Record<
   };
 }
 
-function buildMaterial({ root, scene, accent, setFlag }: SceneServices, values: Record<string, ControlValue>): LessonSceneController {
+function buildMaterial({ root, scene, camera, accent, setFlag }: SceneServices, values: Record<string, ControlValue>): LessonSceneController {
   const texture = createCheckerTexture();
+  let isFresnelDemo = false;
+  let observedFrontalView = false;
   const mesh = new THREE.Mesh<THREE.BufferGeometry, THREE.Material>(
     new THREE.SphereGeometry(1.25, 64, 32),
     createStandardMaterial(accent.getHex(), 0.35, 0.6)
@@ -466,6 +471,13 @@ function buildMaterial({ root, scene, accent, setFlag }: SceneServices, values: 
     apply(next) {
       const color = new THREE.Color(String(next.materialColor ?? '#7dd3fc'));
       const type = String(next.materialType ?? 'standard');
+      const showPanel = Boolean(next.fresnelDemo);
+      if (showPanel !== isFresnelDemo) {
+        mesh.geometry.dispose();
+        mesh.geometry = showPanel ? new THREE.PlaneGeometry(2.5, 2.5) : new THREE.SphereGeometry(1.25, 64, 32);
+        mesh.rotation.set(0, 0, 0);
+        isFresnelDemo = showPanel;
+      }
       mesh.material.dispose();
 
       if (type === 'normal') {
@@ -486,9 +498,23 @@ function buildMaterial({ root, scene, accent, setFlag }: SceneServices, values: 
 
       scene.environmentIntensity = Number(next.envIntensity ?? 1);
       setFlag('usedPbrControls', Number(next.roughness ?? 0) !== 0.35 || Number(next.metalness ?? 0) !== 0.6);
+      const fresnelReady = showPanel && (type === 'standard' || type === 'physical');
+      observedFrontalView ||= fresnelReady
+        && Number(next.metalness ?? 0.6) === 0
+        && Number(next.roughness ?? 0.35) <= 0.15
+        && !Boolean(next.textureEnabled)
+        && Number(next.envIntensity ?? 1) >= 1
+        && Number(next.viewAngle ?? 0) <= 10;
+      setFlag('fresnelReady', fresnelReady);
+      setFlag('observedFrontalView', observedFrontalView);
     },
     tick(delta) {
-      mesh.rotation.y += delta * 0.45;
+      if (isFresnelDemo) {
+        mesh.lookAt(camera().position);
+        mesh.rotateY(THREE.MathUtils.degToRad(Number(values.viewAngle ?? 0)));
+      } else {
+        mesh.rotation.y += delta * 0.45;
+      }
       background.rotation.z += delta * 0.08;
     },
     dispose() {
@@ -499,6 +525,7 @@ function buildMaterial({ root, scene, accent, setFlag }: SceneServices, values: 
 
 function buildLighting({ root, scene, setFlag }: SceneServices, values: Record<string, ControlValue>): LessonSceneController {
   scene.background = new THREE.Color(0x0b1118);
+  let observedEnvironment = false;
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial({ color: 0x20313d, roughness: 0.8 }));
   floor.receiveShadow = true;
   floor.rotation.x = -Math.PI / 2;
@@ -525,23 +552,31 @@ function buildLighting({ root, scene, setFlag }: SceneServices, values: Record<s
   const point = new THREE.PointLight(0x66e0ff, 3, 12);
   point.position.set(-3, 1.4, 2.4);
   root.add(point);
-  root.add(new THREE.PointLightHelper(point, 0.18, 0x66e0ff));
+  const pointHelper = new THREE.PointLightHelper(point, 0.18, 0x66e0ff);
+  root.add(pointHelper);
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.25);
   root.add(ambient);
 
   return {
     apply(next) {
-      ambient.intensity = Number(next.ambientIntensity ?? 0.25);
-      key.intensity = Number(next.keyIntensity ?? 2.5);
+      const mode = String(next.lightingMode ?? 'mixed');
+      ambient.intensity = mode === 'mixed' ? Number(next.ambientIntensity ?? 0.25) : 0;
+      point.intensity = mode === 'mixed' ? 3 : 0;
+      pointHelper.visible = mode === 'mixed';
+      key.intensity = mode === 'environment' ? 0 : Number(next.keyIntensity ?? 2.5);
+      scene.environmentIntensity = mode === 'key' ? 0 : 1;
       key.position.y = Number(next.lightHeight ?? 5);
       key.color.set(String(next.lightColor ?? '#ffffff'));
-      key.castShadow = Boolean(next.shadowEnabled);
+      key.castShadow = mode !== 'environment' && Boolean(next.shadowEnabled);
       objects.forEach((object) => {
         object.castShadow = Boolean(next.shadowEnabled);
         object.receiveShadow = Boolean(next.shadowEnabled);
       });
-      setFlag('shadowTuned', Boolean(next.shadowEnabled) && Number(next.keyIntensity ?? 0) > 1.5);
+      observedEnvironment ||= mode === 'environment';
+      setFlag('keyLightActive', key.intensity > 0);
+      setFlag('comparedLighting', observedEnvironment && mode === 'key');
+      setFlag('shadowTuned', key.castShadow && key.intensity > 1.5);
     },
     tick(delta, elapsed) {
       point.position.x = Math.sin(elapsed) * 3;

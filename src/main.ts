@@ -15,6 +15,7 @@ import type {
   LessonInstance,
   LessonMetrics,
   LessonRuntimeState,
+  ReadingReference,
   WikiArticle,
   WikiDiagramKind,
   WikiVisual
@@ -168,6 +169,7 @@ function renderLessonShell(): void {
             <ul data-role="lesson-mistakes"></ul>
           </article>
         </section>
+        <section class="study-panel" data-role="lesson-readings" hidden></section>
       </main>
 
       <aside class="inspector" aria-label="实验面板">
@@ -321,6 +323,9 @@ function loadLesson(id: string, updateHash = true): void {
   byRole('lesson-mental-model').textContent = currentLesson.narrative.mentalModel;
   byRole('lesson-keypoints').innerHTML = currentLesson.narrative.keyPoints.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
   byRole('lesson-mistakes').innerHTML = currentLesson.narrative.commonMistakes.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  const readings = byRole('lesson-readings');
+  readings.hidden = !currentLesson.narrative.readings?.length;
+  readings.innerHTML = renderReadings(currentLesson.narrative.readings);
   byRole('source').innerHTML = highlightSource(currentLesson.source);
   byRole('runtime-status').textContent = '场景初始化中...';
 
@@ -583,6 +588,7 @@ function renderTerms(): void {
 function renderWikiArticle(): void {
   const article = wikiArticlesByTermId.get(selectedWikiArticleId) ?? wikiArticles[0];
   const detail = byRole('wiki-detail');
+  const readings = renderReadings(article.readings);
   selectedWikiArticleId = article.termId;
 
   detail.innerHTML = `
@@ -607,6 +613,8 @@ function renderWikiArticle(): void {
         </article>
       `).join('')}
     </section>
+
+    ${readings ? `<section class="wiki-section">${readings}</section>` : ''}
 
     <section class="wiki-section wiki-mistakes">
       <h3>常见误区</h3>
@@ -636,6 +644,22 @@ function renderWikiArticle(): void {
   detail.querySelectorAll<HTMLButtonElement>('[data-wiki-term-id]').forEach((buttonEl) => {
     buttonEl.addEventListener('click', () => showWikiArticle(buttonEl.dataset.wikiTermId ?? wikiArticles[0].termId));
   });
+}
+
+function renderReadings(readings: ReadingReference[] = []): string {
+  if (readings.length === 0) {
+    return '';
+  }
+
+  return `
+    <h3>深入阅读 · PBRT 第四版</h3>
+    <p>本页中文讲解与实验由本站编写；以下链接为英文原文。</p>
+    <ul class="reading-list">
+      ${readings.map((reading) => `
+        <li><a class="link-chip" href="${escapeAttr(reading.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(reading.title)} <span>↗ 新标签页</span></a></li>
+      `).join('')}
+    </ul>
+  `;
 }
 
 function renderWikiVisual(visual: WikiVisual): string {

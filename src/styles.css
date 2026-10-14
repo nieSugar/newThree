@@ -448,6 +448,26 @@ button:focus-visible {
   color: #d7f8f5;
 }
 
+.study-panel .reading-list,
+.wiki-section .reading-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.reading-list a {
+  display: block;
+  width: fit-content;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  text-decoration: none;
+}
+
+.reading-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .panel-section {
   padding: 13px;
   margin-bottom: 12px;

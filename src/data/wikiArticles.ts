@@ -10,6 +10,7 @@ interface WikiArticleOverride {
   sections: WikiSection[];
   visuals: WikiVisual[];
   mistakes: string[];
+  readings?: WikiArticle['readings'];
   relatedLessonIds?: string[];
   relatedTermIds?: string[];
 }
@@ -142,10 +143,10 @@ const featuredArticleOverrides = {
     relatedTermIds: ['attribute', 'normal', 'uv', 'mesh']
   },
   pbr: {
-    subtitle: '从玄学调材质走向工程调材质',
+    subtitle: '从材质旋钮走向微表面与光的分配',
     level: '进阶',
-    summary: 'PBR 用 roughness、metalness、environment map 等参数近似真实光照行为。它不是“颜色好看点”，而是材质可信度的核心。',
-    tags: ['material', 'roughness', 'metalness', 'environment map'],
+    summary: 'PBR 用物理启发的模型描述光与表面的交互。结合微表面、菲涅耳效应与能量守恒，理解 roughness、metalness 和环境光照为什么会改变材质观感。',
+    tags: ['material', 'roughness', 'metalness', 'environment map', 'Fresnel', '微表面', 'BRDF', 'BSDF', 'PBRT'],
     visuals: [
       {
         kind: 'image',
@@ -180,13 +181,42 @@ const featuredArticleOverrides = {
           '再确认 HDR/environment map 或 PMREM 是否合理。',
           '最后微调 roughness、metalness、normal map 和 clearcoat。'
         ]
+      },
+      {
+        title: '菲涅耳效应与能量守恒',
+        body: 'Fresnel（菲涅耳效应）描述反射比例随入射角和材料性质变化。许多非金属表面在掠射角下反射更强。BRDF（双向反射分布函数）描述反射光的方向分布；BSDF（双向散射分布函数）还包含透射。',
+        bullets: [
+          '夹角以表面法线为参照：0° 为正入射，接近 90° 时沿表面掠过。粗糙表面还受到微表面方向分布影响。',
+          '非发光表面要在反射、透射与吸收之间分配入射能量，不能凭空放大总能量；屏幕像素亮度还受曝光与色调映射影响。',
+          '在 04 课选择 Standard 或 Physical，开启观察平面，设置非金属、低粗糙度、关闭贴图，比较 0° 与 70°。环境内容也会随角度变化，因此这是定性观察。'
+        ]
+      },
+      {
+        title: '粗糙度来自微表面统计',
+        body: 'microfacet（微表面）模型把微观粗糙看作许多朝向不同的小表面，用统计分布近似它们的反射。roughness 改变反射在方向上的分散程度，而不是网格细分量。',
+        bullets: [
+          '较低 roughness 通常让高光更集中，较高 roughness 让高光更宽、环境反射更模糊。',
+          '在材质球上关闭程序贴图，固定其他参数，从 0.1 调到 0.8，比较高光宽度；几何轮廓不会因此改变。',
+          'normal map 可改变着色法线，改变可见轮廓则需要几何等手段；这些与微表面粗糙度承担不同职责。'
+        ]
+      },
+      {
+        title: '金属、环境光照与实时近似',
+        body: '金属通常主要表现为带颜色的镜面反射，玻璃、水等介电质则可以同时反射和透射。metalness 是实时材质工作流对材料类别的近似控制；环境贴图提供预先记录的周围光照。',
+        bullets: [
+          '在 04 课调高 metalness，再把环境强度从 1 降到 0，观察反射细节的变化。环境缺失时，仅提高金属度无法补出周围内容。',
+          'PMREM 预过滤环境贴图，近似不同粗糙度下的环境光照；它不会自动计算当前物体之间的多次反弹和局部遮挡。',
+          'PBR 描述材质与光照模型，路径追踪是一种求解光传输的方法。本课程使用 Three.js 实时渲染近似，完整采样与路径追踪留作进阶阅读。'
+        ]
       }
     ],
     mistakes: [
       '把 metalness 当亮度旋钮，拉满以后还嫌不够亮。',
       '忘设 texture.colorSpace，颜色发灰还怪设计稿。',
-      '环境贴图缺失时硬做金属材质，效果像一块没睡醒的铁。'
+      '环境贴图缺失时硬做金属材质，效果像一块没睡醒的铁。',
+      '把 roughness 当成几何细分，把 PBR 材质当成自动启用路径追踪。'
     ],
+    readings: lessonBlueprints.find((lesson) => lesson.meta.id === 'material-pbr-texture')?.narrative.readings,
     relatedLessonIds: ['material-pbr-texture', 'project-product-showcase'],
     relatedTermIds: ['roughness', 'metalness', 'environment-map', 'color-space']
   },
@@ -523,6 +553,7 @@ function createWikiArticle(term: GlossaryTerm): WikiArticle {
     summary: override.summary,
     tags: unique([term.term, term.cn, String(term.category), ...term.related, ...override.tags]),
     sections: override.sections,
+    readings: override.readings,
     visuals: override.visuals,
     mistakes: override.mistakes,
     relatedTermIds: unique([...(override.relatedTermIds ?? []), ...baseRelatedTermIds]),
