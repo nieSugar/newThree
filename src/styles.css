@@ -1085,9 +1085,20 @@ output {
     border-left: 0;
   }
 
+  .sidebar {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .lesson-list,
+  .wiki-list {
+    max-height: 260px;
+    overflow: auto;
+    padding-right: 2px;
+    padding-bottom: 4px;
+  }
+
   .lesson-title-band,
   .study-grid,
-  .inspector,
   .wiki-visual-grid,
   .wiki-section-grid,
   .wiki-related-grid {
@@ -1095,14 +1106,22 @@ output {
     grid-template-columns: 1fr;
   }
 
+  .inspector {
+    display: block;
+  }
+
+  .panel-section {
+    margin-bottom: 12px;
+  }
+
   .lesson-actions {
     justify-content: stretch;
     min-width: 0;
   }
 
-.lesson-actions button {
-  flex: 1;
-}
+  .lesson-actions button {
+    flex: 1;
+  }
 
   .canvas-host {
     height: 420px;
