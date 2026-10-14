@@ -1,0 +1,41 @@
+name: Persistent Three Runtime PoC
+
+on:
+  push:
+    branches:
+      - poc/tinyengine-three-persistent-runtime
+  pull_request:
+    paths:
+      - 'poc-host.html'
+      - 'poc-three.html'
+      - 'src/poc/**'
+      - 'poc/tinyengine-host/**'
+      - 'tests/e2e/persistent-runtime.spec.ts'
+      - 'tests/e2e/tinyengine-real.spec.ts'
+      - 'playwright.tinyengine.config.ts'
+      - '.github/workflows/poc-persistent-three.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+      - name: Install Three PoC dependencies
+        run: npm ci
+      - name: Install TinyEngine PoC dependencies
+        run: npm --prefix poc/tinyengine-host install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build Three PoC
+        run: npm run build
+      - name: Build real TinyEngine host
+        run: npm --prefix poc/tinyengine-host run build
+      - name: Verify persistent runtime lifecycle simulator
+        run: npx playwright test tests/e2e/persistent-runtime.spec.ts --project=desktop
+      - name: Verify real TinyEngine integration
+        run: npx playwright test tests/e2e/tinyengine-real.spec.ts --config=playwright.tinyengine.config.ts --project=desktop
