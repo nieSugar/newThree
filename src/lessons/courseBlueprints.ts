@@ -64,6 +64,257 @@ const select = (
 export const lessonBlueprints: LessonBlueprint[] = [
   {
     kind: 'foundation',
+    accent: 0x7dd3fc,
+    meta: {
+      id: 'prep-app-canvas-orientation',
+      title: '00-1. 先认识页面和 Canvas',
+      stage: '入门',
+      difficulty: '小白友好',
+      estimatedMinutes: 12,
+      summary: '先把学习站、canvas、renderer 和右侧实验面板对上号，知道自己正在操作什么。',
+      tags: ['canvas', 'renderer', 'dev server'],
+      terms: ['renderer', 'scene', 'camera', 'mesh']
+    },
+    narrative: {
+      overview: '第一次打开 3D 页面，别急着背 API。先确认三件事：画布在哪里，参数在哪里，练习怎么判定通过。',
+      mentalModel: '浏览器页面像教室，canvas 是黑板，renderer 是粉笔，右侧控件是你伸手能拧的旋钮。',
+      keyPoints: [
+        'Three.js 最终会把画面画到 canvas 上。',
+        '参数面板改的是当前课程的运行状态，不是静态截图。',
+        '练习通过后会自动记录进度，先做小动作比硬读源码更有效。'
+      ],
+      commonMistakes: [
+        '一上来就找完整项目结构，反而忘了先观察画面变化。',
+        '以为右侧控件只是演示，其实它们会直接驱动当前 scene。',
+        '没有先跑通页面，就开始怀疑 Three.js 本身。'
+      ]
+    },
+    controls: [
+      select('shape', '几何形状', 'box', '先用最直观的形状切换确认 canvas 是实时画出来的。', [['box', 'Box'], ['sphere', 'Sphere'], ['torus', 'Torus Knot']]),
+      range('speed', '旋转速度', 0.35, 0, 2, 0.05, '慢一点看清楚动画循环正在每帧刷新。'),
+      range('scale', '缩放', 1, 0.6, 1.8, 0.05, '确认控件会改变 3D 对象，而不是页面文案。'),
+      toggle('wireframe', '线框模式', false, '打开后能看到模型由三角面组成。'),
+      toggle('showAxes', '显示坐标轴', true, '红 X、绿 Y、蓝 Z，先建立空间方向感。')
+    ],
+    exercises: [
+      {
+        id: 'prep-canvas-change-shape',
+        title: '确认画布在实时响应',
+        goal: '把几何形状从 Box 切换到 Sphere 或 Torus。',
+        hint: '看画面是否立刻变化，先建立“控件驱动画面”的直觉。',
+        checks: [{ source: 'flag', key: 'changedShape', op: 'truthy' }]
+      },
+      {
+        id: 'prep-canvas-slow-loop',
+        title: '慢速观察动画',
+        goal: '保持坐标轴显示，并把旋转速度调到 0.45 以下。',
+        hint: '新手先慢看，别一上来把画面转成电风扇。',
+        checks: [
+          { source: 'control', key: 'showAxes', op: 'truthy' },
+          { source: 'control', key: 'speed', op: 'lte', value: 0.45 }
+        ]
+      }
+    ],
+    source: `import './styles.css';
+
+const app = document.querySelector('#app');
+const canvas = document.createElement('canvas');
+app?.append(canvas);
+
+const renderer = new THREE.WebGLRenderer({ canvas });
+renderer.render(scene, camera);`
+  },
+  {
+    kind: 'object3d',
+    accent: 0x8bd46f,
+    meta: {
+      id: 'prep-coordinate-axes-units',
+      title: '00-2. 坐标轴、单位和方向感',
+      stage: '入门',
+      difficulty: '小白友好',
+      estimatedMinutes: 14,
+      summary: '用父子对象和坐标轴建立 X/Y/Z、局部坐标、世界坐标的第一层直觉。',
+      tags: ['axis', 'transform', 'world position'],
+      terms: ['object3d', 'vector3', 'scene', 'mesh']
+    },
+    narrative: {
+      overview: '很多小白不是不会写代码，是一开始就分不清“往右、往上、往前”到底是哪根轴。',
+      mentalModel: '把 3D 空间想成一个带坐标尺的桌面：X 左右，Y 上下，Z 前后；父对象动了，子对象也会跟着动。',
+      keyPoints: [
+        'position 里的 x/y/z 是 3D 空间坐标，不是 CSS 像素。',
+        '子对象的 position 默认是相对父对象的局部坐标。',
+        '看不懂位置时，先打开坐标轴和辅助对象。'
+      ],
+      commonMistakes: [
+        '把 y 当成屏幕向下，结果物体越调越迷糊。',
+        '把子对象的本地坐标误认为世界坐标。',
+        '关闭辅助线后盲调位置，最后自己把自己绕晕。'
+      ]
+    },
+    controls: [
+      range('parentRotation', '父级旋转速度', 0.25, 0, 1.2, 0.05, '慢慢观察父级 Group 如何带动子对象。'),
+      range('childOffset', '子对象偏移', 1.2, 0.4, 2.6, 0.05, '沿本地 X 轴拉开子对象。'),
+      range('childScale', '子对象缩放', 1, 0.5, 1.8, 0.05, '观察缩放如何影响子对象和孙对象。'),
+      range('grandChildHeight', '孙对象高度', 0.65, 0.3, 1.4, 0.05, '沿本地 Y 轴抬高孙对象。'),
+      toggle('showAxes', '显示坐标轴', true, '坐标轴是新手期的拐棍，先别嫌它土。')
+    ],
+    exercises: [
+      {
+        id: 'prep-axis-child-offset',
+        title: '沿 X 轴拉开对象',
+        goal: '把子对象偏移调到 1.8 以上。',
+        hint: '观察它离父级中心越来越远，先把 X 轴方向记住。',
+        checks: [{ source: 'control', key: 'childOffset', op: 'gte', value: 1.8 }]
+      },
+      {
+        id: 'prep-axis-height-scale',
+        title: '区分高度和缩放',
+        goal: '把孙对象高度调到 1.0 以上，并把子对象缩放调到 1.3 以上。',
+        hint: '一个是位置，一个是尺寸，别混成一锅粥。',
+        checks: [
+          { source: 'control', key: 'grandChildHeight', op: 'gte', value: 1 },
+          { source: 'control', key: 'childScale', op: 'gte', value: 1.3 }
+        ]
+      }
+    ],
+    source: `const axes = new THREE.AxesHelper(2);
+scene.add(axes);
+
+const parent = new THREE.Group();
+const child = new THREE.Mesh(geometry, material);
+
+child.position.set(1.2, 0, 0);
+parent.add(child);
+child.getWorldPosition(worldPosition);`
+  },
+  {
+    kind: 'foundation',
+    accent: 0xf4c35b,
+    meta: {
+      id: 'prep-animation-loop-delta',
+      title: '00-3. 动画循环和 Delta Time',
+      stage: '入门',
+      difficulty: '小白友好',
+      estimatedMinutes: 16,
+      summary: '理解 requestAnimationFrame、每帧更新和 delta time，先知道动画为什么会动。',
+      tags: ['animation loop', 'delta time', 'requestAnimationFrame'],
+      terms: ['animation-loop', 'delta-time', 'renderer', 'mesh']
+    },
+    narrative: {
+      overview: 'Three.js 动画不是“自动动起来”的，核心是每一帧改一点状态，然后重新 render。',
+      mentalModel: '动画循环像翻页动画：每页只变一点点，翻得足够快，看起来就连续了。',
+      keyPoints: [
+        'requestAnimationFrame 会在浏览器准备绘制下一帧时回调。',
+        'delta time 表示两帧之间经过了多久。',
+        '速度乘 delta，动画才不会因为机器快慢而忽快忽慢。'
+      ],
+      commonMistakes: [
+        '只 render 一次，就期待物体自己转起来。',
+        '直接每帧加固定值，导致高刷屏动画更快。',
+        '动画太快时先怪模型，其实是速度参数没管住。'
+      ]
+    },
+    controls: [
+      select('shape', '观察对象', 'box', '换一个形状，确认动画循环和 geometry 没绑死。', [['box', 'Box'], ['sphere', 'Sphere'], ['torus', 'Torus Knot']]),
+      range('speed', '每秒旋转速度', 0.4, 0, 2.5, 0.05, '把速度当成“每秒变化量”，不是每帧变化量。'),
+      range('scale', '缩放', 1, 0.6, 1.8, 0.05, '放大一点，观察旋转更明显。'),
+      toggle('wireframe', '线框模式', false, '用线框看清旋转方向。'),
+      toggle('showAxes', '显示坐标轴', true, '对照坐标轴判断绕哪个方向在转。')
+    ],
+    exercises: [
+      {
+        id: 'prep-loop-speed-up',
+        title: '调快再观察',
+        goal: '把每秒旋转速度调到 1.1 以上。',
+        hint: '注意这是每秒速度，真实代码里应该乘 delta。',
+        checks: [{ source: 'control', key: 'speed', op: 'gte', value: 1.1 }]
+      },
+      {
+        id: 'prep-loop-wire-scale',
+        title: '看清每帧变化',
+        goal: '打开线框模式，并把缩放调到 1.2 以上。',
+        hint: '线框能让旋转方向更容易观察。',
+        checks: [
+          { source: 'control', key: 'wireframe', op: 'truthy' },
+          { source: 'control', key: 'scale', op: 'gte', value: 1.2 }
+        ]
+      }
+    ],
+    source: `let last = performance.now();
+
+function loop(now) {
+  const delta = (now - last) / 1000;
+  last = now;
+
+  mesh.rotation.y += delta * speed;
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}`
+  },
+  {
+    kind: 'camera',
+    accent: 0xff816b,
+    meta: {
+      id: 'prep-black-screen-debugging',
+      title: '00-4. 黑屏排查三板斧',
+      stage: '入门',
+      difficulty: '小白友好',
+      estimatedMinutes: 18,
+      summary: '先学会排查 scene、camera、renderer 和尺寸问题，遇到黑屏别当场自闭。',
+      tags: ['debugging', 'camera', 'renderer', 'resize'],
+      terms: ['scene', 'camera', 'renderer', 'device-pixel-ratio', 'orbit-controls']
+    },
+    narrative: {
+      overview: '小白写 Three.js 最常见的崩溃点不是 shader，而是“我啥都看不见”。先把排查顺序练熟。',
+      mentalModel: '黑屏排查像找电路：对象有没有进 scene，相机有没有看见它，renderer 有没有画到正确尺寸。',
+      keyPoints: [
+        '对象必须 add 到 scene 或 scene 的子层级里。',
+        'camera 的位置、朝向、near/far 会决定物体是否可见。',
+        '窗口变化后要同步 renderer size 和 camera projection。'
+      ],
+      commonMistakes: [
+        '模型看不到就疯狂改材质，其实相机没对准。',
+        'resize 后只改 canvas CSS，不改 renderer 实际尺寸。',
+        'near/far 设置太离谱，导致裁切或深度精度问题。'
+      ]
+    },
+    controls: [
+      select('projection', '投影方式', 'perspective', '先比较透视和正交，知道相机不是摆设。', [['perspective', 'Perspective'], ['orthographic', 'Orthographic']]),
+      range('fov', 'FOV', 52, 25, 90, 1, '透视相机的视野角，太大容易变形。', 'deg'),
+      range('cameraDistance', '相机距离', 7, 3, 13, 0.1, '拉远相机通常是排查看不见物体的第一步。'),
+      toggle('autoOrbit', '自动环绕', false, '让相机绕目标移动，确认目标确实在场景中心。'),
+      toggle('showAxes', '显示坐标轴', true, '用坐标轴确认相机正在看哪里。')
+    ],
+    exercises: [
+      {
+        id: 'prep-debug-camera-distance',
+        title: '拉远相机找目标',
+        goal: '把相机距离调到 9 以上。',
+        hint: '看不见物体时，先别乱改模型，先确认相机距离。',
+        checks: [{ source: 'control', key: 'cameraDistance', op: 'gte', value: 9 }]
+      },
+      {
+        id: 'prep-debug-projection',
+        title: '切换投影排查',
+        goal: '把投影方式切换为 Orthographic，并保持坐标轴显示。',
+        hint: '正交模式能帮你判断问题是不是透视观察带来的。',
+        checks: [
+          { source: 'control', key: 'projection', op: 'eq', value: 'orthographic' },
+          { source: 'control', key: 'showAxes', op: 'truthy' }
+        ]
+      }
+    ],
+    source: `camera.position.set(0, 1.8, 7);
+camera.lookAt(0, 0, 0);
+
+renderer.setSize(width, height);
+camera.aspect = width / height;
+camera.updateProjectionMatrix();
+
+renderer.render(scene, camera);`
+  },
+  {
+    kind: 'foundation',
     accent: 0x38bdf8,
     meta: {
       id: 'foundation-scene-camera-renderer',

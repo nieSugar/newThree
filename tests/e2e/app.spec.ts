@@ -14,7 +14,7 @@ test('switches lessons without accumulating canvases', async ({ page }, testInfo
   await page.goto('/');
   const lessons = page.locator('.lesson-row');
   const count = await lessons.count();
-  expect(count).toBeGreaterThanOrEqual(26);
+  expect(count).toBeGreaterThanOrEqual(30);
   const sampleCount = testInfo.project.name === 'mobile' ? Math.min(count, 6) : count;
 
   for (let index = 0; index < sampleCount; index += 1) {

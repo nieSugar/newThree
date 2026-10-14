@@ -1,6 +1,6 @@
 # Three.js 交互学习站
 
-这是一个面向小白到进阶学习者的中文 Three.js 实验式课程站。项目采用 Vanilla TypeScript + Vite，不套 React/Vue/R3F，让学习者直接理解 Three.js 本体：scene、camera、renderer、geometry、material、lighting、interaction、assets、animation、postprocessing、optimization、shader、physics、WebXR、WebGPU，以及能落地到作品的工程化项目。
+这是一个面向小白到进阶学习者的中文 Three.js 实验式课程站。项目采用 Vanilla TypeScript + Vite，不套 React/Vue/R3F，让学习者先用 00 系列预备课建立 canvas、坐标系、动画循环和黑屏排查直觉，再直接理解 Three.js 本体：scene、camera、renderer、geometry、material、lighting、interaction、assets、animation、postprocessing、optimization、shader、physics、WebXR、WebGPU，以及能落地到作品的工程化项目。
 
 ## 启动
 
@@ -13,6 +13,7 @@ npm run dev
 
 ## 课程结构
 
+- 预备：Canvas 页面入口、坐标轴和单位、Animation Loop、Delta Time、黑屏排查。
 - 入门：Scene、Camera、Renderer、Mesh、Animation Loop。
 - 核心：Object3D、Vector3、Euler、Quaternion、Matrix4、BufferGeometry、Attribute。
 - 效果：PBR、Texture、Light、Shadow Map、Tone Mapping、Post Processing、Bloom。
@@ -24,12 +25,13 @@ npm run dev
 
 ## 学习路线
 
-1. 01-03：先跑通最小 Three.js 闭环，再理解场景图和 BufferGeometry。
-2. 04-07：进入真实项目高频区，重点练材质、灯光、相机和交互。
-3. 08-12：学习资产、动画、后处理和性能优化，开始知道项目为什么会卡、会糊、会漏资源。
-4. 13-15：接触 shader、物理、WebXR 和 WebGPU，知道高级能力的边界和 fallback。
-5. 16-23：补工程进阶课，包括生命周期、程序化生成、粒子、RenderTarget、噪声材质、镜头路径、大世界和 HUD。
-6. 24-26：做项目实战，把知识组合成产品展示、数据可视化和作品集级毕业项目。
+1. 00-1 到 00-4：先认识页面、canvas、坐标轴、动画循环和黑屏排查，给纯新手补一层安全垫。
+2. 01-03：跑通最小 Three.js 闭环，再理解场景图和 BufferGeometry。
+3. 04-07：进入真实项目高频区，重点练材质、灯光、相机和交互。
+4. 08-12：学习资产、动画、后处理和性能优化，开始知道项目为什么会卡、会糊、会漏资源。
+5. 13-15：接触 shader、物理、WebXR 和 WebGPU，知道高级能力的边界和 fallback。
+6. 16-23：补工程进阶课，包括生命周期、程序化生成、粒子、RenderTarget、噪声材质、镜头路径、大世界和 HUD。
+7. 24-26：做项目实战，把知识组合成产品展示、数据可视化和作品集级毕业项目。
 
 学完这套的目标不是“背完 Three.js 文档”，而是能独立搭一个可交互 3D 页面，能看指标优化性能，能调材质灯光效果，能解释常见专业名词，并且知道遇到复杂项目时应该拆成哪些工程模块。
 

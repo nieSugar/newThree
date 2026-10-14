@@ -7,9 +7,9 @@ describe('lesson registry', () => {
     const registry = createLessonRegistry(lessons);
     const ids = registry.all.map((lesson) => lesson.meta.id);
 
-    expect(ids.length).toBe(26);
+    expect(ids.length).toBe(30);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(registry.get(ids[0]).meta.title).toContain('01.');
+    expect(registry.get(ids[0]).meta.title).toContain('00-1.');
     expect(registry.get(ids[ids.length - 1]).meta.title).toContain('26.');
     expect(registry.next(ids[0])?.meta.id).toBe(ids[1]);
     expect(registry.previous(ids[1])?.meta.id).toBe(ids[0]);
